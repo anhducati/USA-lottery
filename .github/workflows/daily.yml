@@ -2,10 +2,16 @@ name: Daily Update
 
 on:
   schedule:
-    # 18:30, 18:35, 18:40 VN (UTC+7)
+    # 18:30 → 19:10 VN, mỗi 5 phút (UTC+7 = 11:30 → 12:10 UTC)
     - cron: "30 11 * * *"
     - cron: "35 11 * * *"
     - cron: "40 11 * * *"
+    - cron: "45 11 * * *"
+    - cron: "50 11 * * *"
+    - cron: "55 11 * * *"
+    - cron: "00 12 * * *"
+    - cron: "05 12 * * *"
+    - cron: "10 12 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -22,6 +28,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -34,20 +42,56 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run crawler & generate data
+      # Backup xsmb.json trước khi chạy crawler (để nếu crawler fail/no data thì restore)
+      - name: Backup current xsmb.json (if exists)
         run: |
+          mkdir -p data images
+          if [ -f "data/xsmb.json" ]; then
+            cp data/xsmb.json /tmp/xsmb.json.bak
+            echo "Backed up existing data/xsmb.json"
+          else
+            echo "No existing data/xsmb.json to backup"
+          fi
+
+      - name: Run crawler & generate data
+        id: crawl
+        run: |
+          set +e
           echo "Running XSMB crawler..."
           python src/main.py
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit 0
+
+      # Nếu crawler chạy xong nhưng không tạo xsmb.json (hoặc tạo lỗi), restore bản cũ để site không 404
+      - name: Ensure data/xsmb.json exists (restore if missing)
+        run: |
+          mkdir -p data images
+
+          if [ -f "data/xsmb.json" ]; then
+            echo "data/xsmb.json exists ✅"
+            exit 0
+          fi
+
+          echo "data/xsmb.json missing ❌"
+          if [ -f "/tmp/xsmb.json.bak" ]; then
+            cp /tmp/xsmb.json.bak data/xsmb.json
+            echo "Restored previous data/xsmb.json ✅"
+          else
+            # Tạo placeholder tối thiểu để không 404 (trang vẫn chạy được)
+            cat > data/xsmb.json <<'JSON'
+          { "note":"Chua co du lieu hom nay","items":[]}
+          JSON
+            echo "Created placeholder data/xsmb.json ✅"
+          fi
 
       - name: Commit & push if changed
         run: |
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # đảm bảo thư mục tồn tại để git add không lỗi
-          mkdir -p data images
-
-          # add an toàn: nếu chưa có file cũng không crash
+          # Add an toàn (không fail nếu folder rỗng)
           git add -A data images || true
 
           if git diff --cached --quiet; then
