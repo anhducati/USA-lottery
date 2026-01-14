@@ -1,35 +1,29 @@
-name: Daily Update
+name: Daily Update (XSMB) + Deploy Pages
 
 on:
   schedule:
-    # 18:30 → 19:10 VN, mỗi 5 phút (UTC+7 = 11:30 → 12:10 UTC)
+    # 18:30, 18:35, 18:40 VN (UTC+7)
     - cron: "30 11 * * *"
     - cron: "35 11 * * *"
     - cron: "40 11 * * *"
-    - cron: "45 11 * * *"
-    - cron: "50 11 * * *"
-    - cron: "55 11 * * *"
-    - cron: "00 12 * * *"
-    - cron: "05 12 * * *"
-    - cron: "10 12 * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
-  group: xsmb-daily
+  group: xsmb-pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -42,62 +36,51 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Backup xsmb.json trước khi chạy crawler (để nếu crawler fail/no data thì restore)
-      - name: Backup current xsmb.json (if exists)
+      - name: Run crawler
         run: |
-          mkdir -p data images
-          if [ -f "data/xsmb.json" ]; then
-            cp data/xsmb.json /tmp/xsmb.json.bak
-            echo "Backed up existing data/xsmb.json"
-          else
-            echo "No existing data/xsmb.json to backup"
-          fi
-
-      - name: Run crawler & generate data
-        id: crawl
-        run: |
-          set +e
           echo "Running XSMB crawler..."
           python src/main.py
-          EXIT_CODE=$?
-          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
-          exit 0
 
-      # Nếu crawler chạy xong nhưng không tạo xsmb.json (hoặc tạo lỗi), restore bản cũ để site không 404
-      - name: Ensure data/xsmb.json exists (restore if missing)
+      # ✅ đảm bảo không bao giờ 404 vì thiếu file
+      - name: Ensure data/xsmb.json exists (create placeholder if missing)
         run: |
           mkdir -p data images
 
-          if [ -f "data/xsmb.json" ]; then
-            echo "data/xsmb.json exists ✅"
-            exit 0
-          fi
-
-          echo "data/xsmb.json missing ❌"
-          if [ -f "/tmp/xsmb.json.bak" ]; then
-            cp /tmp/xsmb.json.bak data/xsmb.json
-            echo "Restored previous data/xsmb.json ✅"
-          else
-            # Tạo placeholder tối thiểu để không 404 (trang vẫn chạy được)
-            cat > data/xsmb.json <<'JSON'
-          { "note":"Chua co du lieu hom nay","items":[]}
-          JSON
-            echo "Created placeholder data/xsmb.json ✅"
-          fi
-
-      - name: Commit & push if changed
-        run: |
+          if [ ! -f "data/xsmb.json" ]; then
+            python - <<'PY'
+          import json, pathlib
+          path = pathlib.Path("data/xsmb.json")
+          path.write_text(json.dumps([], ensure_ascii=False), encoding="utf-8")
+          print("Created placeholder data/xsmb.json ✅")
+          PY
+                    fi
+          
+                - name: Commit & push if changed
+                  run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add an toàn (không fail nếu folder rỗng)
           git add -A data images || true
 
           if git diff --cached --quiet; then
             echo "No data changes detected. Skipping commit."
-            exit 0
+          else
+            git commit -m "chore: update XSMB data ($(date -u +"%Y-%m-%d %H:%M UTC"))"
+            git push
           fi
 
-          git commit -m "chore: update XSMB data ($(date -u +"%Y-%m-%d %H:%M UTC"))"
-          git push
+      # ✅ Deploy Pages ngay trong workflow này
+      - name: Disable Jekyll (optional but recommended)
+        run: touch .nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
