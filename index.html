@@ -4,278 +4,501 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>XSMB Daily Dashboard</title>
-
-  <!-- Bootstrap 5 (CDN) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <meta name="description" content="Dashboard kết quả XSMB (Miền Bắc) cập nhật tự động từ GitHub Actions." />
 
   <style>
     :root{
-      --card-radius: 18px;
-      --glass: rgba(255,255,255,.72);
-      --glass-2: rgba(255,255,255,.58);
-      --border: rgba(15, 23, 42, .10);
-      --shadow: 0 12px 30px rgba(0,0,0,.08);
-      --shadow2: 0 8px 18px rgba(0,0,0,.08);
+      --bg1:#eef2ff;
+      --bg2:#ffffff;
+      --card:#ffffffcc;
+      --stroke:#e5e7eb;
+      --text:#0f172a;
+      --muted:#64748b;
+
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+
+      --shadow: 0 10px 30px rgba(2,6,23,.10);
+      --shadow2: 0 8px 18px rgba(2,6,23,.08);
+
+      --r: 18px;
+      --r2: 14px;
     }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
+      margin:0;
+      color:var(--text);
       background:
-        radial-gradient(1200px 500px at 18% 6%, rgba(34,197,94,.22), transparent 55%),
-        radial-gradient(900px 520px at 92% 8%, rgba(59,130,246,.22), transparent 60%),
-        radial-gradient(900px 600px at 55% 100%, rgba(236,72,153,.12), transparent 60%),
-        linear-gradient(180deg, #f8fafc 0%, #ffffff 55%, #f8fafc 100%);
-      color:#0f172a;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+        radial-gradient(900px 520px at 20% 0%, #dbeafe 0%, transparent 60%),
+        radial-gradient(900px 520px at 80% 0%, #fde68a 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding: 18px 14px 40px;
     }
 
-    .container-max{
-      max-width: 1200px;
-    }
+    a{color:inherit}
+    .wrap{max-width:1100px;margin:0 auto}
 
-    .hero{
-      background: linear-gradient(90deg, rgba(34,197,94,.18), rgba(59,130,246,.18), rgba(236,72,153,.18));
-      border: 1px solid var(--border);
-      border-radius: 26px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      position: relative;
-    }
-    .hero::after{
+    /* Topbar */
+      .topbar{
+        position: relative;   /* hoặc: position: static; */
+        top: auto;
+        z-index: auto;
+
+        backdrop-filter: blur(14px);
+        background: rgba(255,255,255,.55);
+        border:1px solid rgba(255,255,255,.7);
+        box-shadow: var(--shadow);
+        border-radius: 26px;
+        padding: 12px;
+        overflow:hidden;
+      }
+
+    .topbar::before{
       content:"";
-      position:absolute; inset:-60px -60px auto auto;
-      width: 220px; height: 220px;
-      background: radial-gradient(circle, rgba(255,255,255,.5), transparent 60%);
-      filter: blur(1px);
-      transform: rotate(8deg);
-      pointer-events:none;
+      position:absolute; inset:-2px;
+      background: conic-gradient(from 210deg, #22c55e, #06b6d4, #a855f7, #f97316, #22c55e);
+      filter: blur(18px);
+      opacity:.35;
+      z-index:-1;
     }
-
-    .brand-badge{
-      width: 56px; height: 56px;
-      border-radius: 18px;
-      background: conic-gradient(from 120deg, #22c55e, #3b82f6, #ec4899, #f59e0b, #22c55e);
-      box-shadow: 0 10px 24px rgba(0,0,0,.15);
-    }
-
-    .chip{
-      display:inline-flex;
+    .topbarInner{
+      display:flex;
       align-items:center;
-      gap:.45rem;
-      padding: .4rem .7rem;
-      border-radius: 999px;
-      background: var(--glass);
-      border: 1px solid var(--border);
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      min-width:280px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background: conic-gradient(from 0deg, #60a5fa, #34d399, #fbbf24, #fb7185, #a78bfa, #60a5fa);
       box-shadow: var(--shadow2);
-      font-size: .9rem;
-      line-height: 1;
-      white-space: nowrap;
+      flex:0 0 auto;
     }
-    .chip .dot{
-      width: .6rem; height: .6rem; border-radius: 99px;
-      background: #e2e8f0;
-      box-shadow: inset 0 0 0 2px rgba(0,0,0,.06);
+    .title{
+      line-height:1.15;
     }
-    .dot.ok{ background:#22c55e; }
-    .dot.warn{ background:#f59e0b; }
-    .dot.bad{ background:#ef4444; }
+    .title h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .title .sub{
+      margin-top:3px;
+      font-size:12.5px;
+      color:var(--muted);
+    }
 
-    .btn-chip{
+    .metaRow{
+      display:flex; flex-wrap:wrap;
+      gap:8px;
+      justify-content:flex-end;
+      align-items:center;
+      width:100%;
+    }
+
+    .pill{
+      display:flex; align-items:center; gap:8px;
+      background: rgba(255,255,255,.78);
+      border:1px solid rgba(15,23,42,.08);
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.7);
-      padding: .42rem .75rem;
-      font-weight: 600;
+      padding: 8px 10px;
+      font-size:12.5px;
+      color:#0f172a;
+      box-shadow: 0 6px 14px rgba(2,6,23,.06);
+      min-width: 0;
+      max-width: 100%;
     }
-
-    .card-glass{
-      background: var(--glass);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-      box-shadow: var(--shadow2);
+    .pill b{font-weight:700}
+    .dot{
+      width:9px;height:9px;border-radius:999px;
+      background: var(--warn);
+      box-shadow: 0 0 0 3px rgba(245,158,11,.18);
+      flex:0 0 auto;
     }
+    .dot.ok{background:var(--ok); box-shadow:0 0 0 3px rgba(22,163,74,.18)}
+    .dot.bad{background:var(--bad); box-shadow:0 0 0 3px rgba(239,68,68,.18)}
 
-    .mono{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    .btnRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      width:100%;
     }
-
-    .big-number{
-      font-size: clamp(1.15rem, 3.4vw, 1.5rem);
-      font-weight: 800;
-      letter-spacing: .3px;
-    }
-
-    .table thead th{
-      font-weight: 800;
-      border-bottom: 1px solid rgba(0,0,0,.08) !important;
-    }
-
-    .img-chart{
-      width: 100%;
-      height: auto;
-      display:block;
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,.10);
-      background: rgba(255,255,255,.5);
-    }
-
-    .help-i{
-      width: 22px; height: 22px;
-      border-radius: 99px;
+    .btn{
+      appearance:none;
+      border:1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.82);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size:12.5px;
+      cursor:pointer;
+      text-decoration:none;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      border: 1px solid rgba(15,23,42,.18);
-      background: rgba(255,255,255,.7);
-      color:#0f172a;
-      font-size: .85rem;
-      cursor: pointer;
+      gap:8px;
+      box-shadow: 0 6px 14px rgba(2,6,23,.06);
       user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn:hover{background:#fff}
+    .btn:active{transform: translateY(1px)}
+    .btn code{font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; font-size:12px}
+
+    /* Content */
+    .section{margin-top:16px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
     }
 
-    .section-title{
-      font-weight: 900;
-      letter-spacing: .2px;
+    .card{
+      background: var(--card);
+      border: 1px solid rgba(15,23,42,.08);
+      border-radius: var(--r);
+      box-shadow: var(--shadow2);
+      padding: 16px;
+      overflow:hidden;
     }
 
-    /* Mobile tweaks */
-    @media (max-width: 576px){
-      .hero{
-        border-radius: 22px;
+    .cardHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 12px;
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .muted{color:var(--muted);font-size:13px}
+
+    .statusLine{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(15,23,42,.08);
+      background: rgba(255,255,255,.75);
+      margin-bottom: 12px;
+    }
+    .statusLine.ok{border-color: rgba(22,163,74,.22); background: rgba(22,163,74,.08)}
+    .statusLine.warn{border-color: rgba(245,158,11,.22); background: rgba(245,158,11,.10)}
+    .statusLine.bad{border-color: rgba(239,68,68,.22); background: rgba(239,68,68,.08)}
+    .statusText{font-size:13px}
+
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .stat{
+      background: rgba(255,255,255,.82);
+      border:1px solid rgba(15,23,42,.08);
+      border-radius: 14px;
+      padding: 12px 12px;
+      min-width:0;
+    }
+    .stat .k{font-size:12px;color:var(--muted)}
+    .stat .v{
+      margin-top:6px;
+      font-size:20px;
+      font-weight:800;
+      letter-spacing:.3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius: 14px;
+      border:1px solid rgba(15,23,42,.08);
+      background: rgba(255,255,255,.82);
+    }
+    th,td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(15,23,42,.06);
+      font-size:13px;
+      vertical-align:top;
+    }
+    th{
+      text-align:left;
+      color:#0f172a;
+      background: rgba(2,6,23,.03);
+      font-weight:700;
+    }
+    tr:last-child td{border-bottom:none}
+
+    .scrollX{
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 14px;
+    }
+
+    .chips{
+      display:flex; flex-wrap:wrap; gap:6px;
+    }
+    .chip{
+      padding:6px 8px;
+      border-radius: 999px;
+      background: rgba(2,6,23,.04);
+      border:1px solid rgba(15,23,42,.06);
+      font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      font-size:12px;
+      line-height:1;
+    }
+
+    /* Charts */
+    .chartGrid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .chartCard{
+      border-radius: 16px;
+      border:1px solid rgba(15,23,42,.08);
+      background: rgba(255,255,255,.82);
+      overflow:hidden;
+      box-shadow: 0 10px 20px rgba(2,6,23,.06);
+    }
+    .chartHead{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 12px;
+      gap:10px;
+      border-bottom:1px solid rgba(15,23,42,.06);
+    }
+    .chartTitle{
+      font-weight:800;
+      font-size:13.5px;
+      margin:0;
+    }
+    .chartBody{
+      padding:10px 12px 12px;
+    }
+    .chartBody img{
+      width:100%;
+      height:auto;
+      border-radius: 12px;
+      display:block;
+      background: rgba(2,6,23,.03);
+    }
+
+    /* Info tooltip */
+    .infoWrap{position:relative; display:inline-flex; align-items:center; gap:8px}
+    .infoBtn{
+      width:28px;height:28px;border-radius:999px;
+      border:1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.9);
+      cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
+      font-weight:900;
+      color:#0f172a;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .infoBtn:active{transform: translateY(1px)}
+    .popover{
+      position:absolute;
+      right:0;
+      top:36px;
+      width: 320px;
+      max-width: 86vw;
+      border-radius: 14px;
+      background: #0b1220;
+      color: #e5e7eb;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 50px rgba(2,6,23,.35);
+      padding: 10px 10px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      display:none;
+      pointer-events:auto;
+    }
+    .popover::before{
+      content:"";
+      position:absolute;
+      top:-6px;
+      right: 12px;
+      width: 12px; height:12px;
+      transform: rotate(45deg);
+      background: #0b1220;
+      border-left:1px solid rgba(255,255,255,.12);
+      border-top:1px solid rgba(255,255,255,.12);
+    }
+    .infoBtn.open + .popover{display:block}
+
+    /* Desktop hover (tuỳ) */
+    @media (hover:hover){
+      .infoBtn:hover + .popover{display:block}
+    }
+
+    /* Footer */
+    .footer{
+      margin-top: 18px;
+      text-align:center;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    /* Responsive fixes */
+    @media (max-width: 900px){
+      .topbarInner{
+        flex-direction:column;
+        align-items:stretch;
+        gap:10px;
       }
-      .brand-badge{
-        width: 50px; height: 50px; border-radius: 16px;
+      .brand{min-width:unset; width:100%}
+      .metaRow{justify-content:flex-start; width:100%; gap:8px}
+
+      .pill{flex:1 1 auto; min-width:0; max-width:100%}
+      .pill:nth-child(1){flex: 1 1 100%}
+      .pill:nth-child(2),
+      .pill:nth-child(3),
+      .pill:nth-child(4){flex: 1 1 calc(50% - 6px)}
+
+      .btnRow{width:100%}
+      .btn{flex: 1 1 calc(33.33% - 6px); text-align:center; padding:10px 10px}
+
+      .stats{grid-template-columns: 1fr}
+      .chartGrid{grid-template-columns: 1fr}
+      table{min-width:860px}
+    }
+
+    @media (max-width: 520px){
+      .popover{
+        left:50%;
+        right:auto;
+        transform: translateX(-50%);
+        width: min(340px, 88vw);
       }
-      .chip{
-        font-size: .85rem;
-        padding: .38rem .62rem;
+      .popover::before{
+        left:50%;
+        right:auto;
+        transform: translateX(-50%) rotate(45deg);
       }
-      .btn-chip{
-        padding: .38rem .62rem;
-        font-size: .9rem;
-      }
-      .card-glass{
-        border-radius: 16px;
-      }
+    }
+
+    @media (max-width: 420px){
+      body{padding: 14px 12px 34px}
+      .card{padding:14px}
+      .title h1{font-size:16px}
+      .pill{font-size:12px}
+      .btn{font-size:12px; flex: 1 1 100%}
+
+      .pill:nth-child(2),
+      .pill:nth-child(3),
+      .pill:nth-child(4){flex: 1 1 100%}
     }
   </style>
 </head>
 
 <body>
-  <div class="container container-max py-3 py-md-4">
-
-    <!-- HEADER / HERO -->
-    <div class="hero p-3 p-md-4 mb-3 mb-md-4">
-      <div class="d-flex align-items-start gap-3 flex-wrap">
-        <div class="brand-badge flex-shrink-0"></div>
-
-        <div class="flex-grow-1">
-          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <div>
-              <div class="h3 mb-0 fw-black" style="font-weight: 900;">XSMB Daily Dashboard</div>
-              <div class="text-secondary mt-1">
-                Cập nhật 18:30 VN (tự thử lại mỗi ~5 phút nếu trễ)
-              </div>
-            </div>
-
-            <div class="d-flex flex-wrap gap-2 justify-content-end">
-              <span class="chip" id="chipStatus">
-                <span class="dot" id="statusDot"></span>
-                <span id="statusText">Đang kiểm tra…</span>
-              </span>
-
-              <span class="chip">
-                Updated (VN):
-                <span class="mono" id="metaUpdatedVn">—</span>
-              </span>
-
-              <span class="chip">
-                SHA:
-                <span class="mono" id="metaSha">—</span>
-              </span>
-
-              <span class="chip">
-                Run:
-                <span class="mono" id="metaRun">—</span>
-              </span>
-
-              <!-- <a class="btn btn-chip" href="./data/xsmb.json" target="_blank" rel="noopener">xsmb.json</a>
-              <a class="btn btn-chip" href="./data/last7.json" target="_blank" rel="noopener">last7.json</a>
-              <a class="btn btn-chip" href="./data/site_meta.json" target="_blank" rel="noopener">meta</a> -->
-            </div>
+  <div class="wrap">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbarInner">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="title">
+            <h1>XSMB Daily Dashboard</h1>
+            <div class="sub">Cập nhật 18:30 VN (tự retry nếu trễ) • Giao diện tối ưu cho di động • 100% tiếng Việt</div>
           </div>
+        </div>
 
-          <div class="alert alert-danger mt-3 mb-0 d-none" id="topError">
-            <div class="fw-bold">Lỗi tải dữ liệu</div>
-            <div class="mono small" id="topErrorText">—</div>
+        <div class="metaRow">
+          <div class="pill" id="pillStatus">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText"><b>Đang tải…</b> • kiểm tra dữ liệu</span>
+          </div>
+          <div class="pill"><span class="muted">Updated (VN):</span> <b id="metaUpdated">—</b></div>
+          <div class="pill"><span class="muted">SHA:</span> <b id="metaSha">—</b></div>
+          <div class="pill"><span class="muted">Run:</span> <b id="metaRun">—</b></div>
+
+          <div class="btnRow">
+            <a class="btn" id="btnXsmb" href="./data/xsmb.json" target="_blank" rel="noopener"><code>xsmb.json</code></a>
+            <a class="btn" id="btnLast7" href="./data/last7.json" target="_blank" rel="noopener"><code>last7.json</code></a>
+            <a class="btn" id="btnMeta" href="./data/site_meta.json" target="_blank" rel="noopener"><code>meta</code></a>
           </div>
         </div>
       </div>
     </div>
 
     <!-- KẾT QUẢ MỚI NHẤT -->
-    <div class="card-glass p-3 p-md-4 mb-3 mb-md-4">
-      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div class="h5 mb-0 section-title">Kết quả mới nhất</div>
-        <div class="chip">
-          Nguồn:
-          <span class="mono" id="metaSource">—</span>
+    <div class="section card">
+      <div class="cardHeader">
+        <h2>Kết quả mới nhất</h2>
+        <div class="muted">Nguồn: <span id="metaSource">—</span></div>
+      </div>
+
+      <div class="statusLine" id="lineStatus">
+        <span class="dot" id="lineDot"></span>
+        <div class="statusText" id="lineText">Đang tải dữ liệu…</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="k">Ngày</div>
+          <div class="v" id="statDate">—</div>
+        </div>
+        <div class="stat">
+          <div class="k">Giải đặc biệt (ĐB)</div>
+          <div class="v" id="statSpecial">—</div>
+        </div>
+        <div class="stat">
+          <div class="k">Đề (2 số cuối ĐB)</div>
+          <div class="v" id="statDe">—</div>
         </div>
       </div>
 
-      <div class="row g-3">
-        <div class="col-12 col-md-4">
-          <div class="card-glass p-3 h-100">
-            <div class="text-secondary">Ngày</div>
-            <div class="big-number" id="latestDate">—</div>
-          </div>
-        </div>
-        <div class="col-12 col-md-4">
-          <div class="card-glass p-3 h-100">
-            <div class="text-secondary">Giải đặc biệt</div>
-            <div class="big-number mono" id="latestSpecial">—</div>
-          </div>
-        </div>
-        <div class="col-12 col-md-4">
-          <div class="card-glass p-3 h-100">
-            <div class="text-secondary">Đề (2 số cuối ĐB)</div>
-            <div class="big-number mono" id="latestDe">—</div>
-          </div>
-        </div>
+      <div class="scrollX">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:170px">Giải</th>
+              <th>Kết quả</th>
+            </tr>
+          </thead>
+          <tbody id="tblLatest">
+            <tr><td colspan="2" class="muted">Đang tải…</td></tr>
+          </tbody>
+        </table>
       </div>
 
-      <div class="mt-3">
-        <div class="table-responsive">
-          <table class="table align-middle mb-0">
-            <thead>
-              <tr>
-                <th style="width: 180px;">Giải</th>
-                <th>Kết quả</th>
-              </tr>
-            </thead>
-            <tbody id="latestTable">
-              <tr><td colspan="2" class="text-secondary">Đang tải…</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="text-secondary small mt-2"></div>
-      </div>
+      <div class="footer">© Tự động tạo bởi GitHub Actions</div>
     </div>
 
     <!-- LỊCH 7 NGÀY -->
-    <div class="card-glass p-3 p-md-4 mb-3 mb-md-4">
-      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div class="h5 mb-0 section-title">Lịch gần nhất 7 ngày (đầy đủ)</div>
-        <div class="text-secondary small">
-          Quy tắc hiển thị số: <b>ĐB/G1/G2/G3 = 5 số</b> • <b>G4/G5 = 4 số</b> • <b>G6 = 3 số</b> • <b>G7 = 2 số</b>
-        </div>
+    <div class="section card">
+      <div class="cardHeader">
+        <h2>Lịch gần nhất 7 ngày (full)</h2>
+        <div class="muted">Tự format số theo quy tắc giải</div>
       </div>
 
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
+      <div class="scrollX">
+        <table>
           <thead>
             <tr>
-              <th>Ngày</th>
+              <th style="width:120px">Ngày</th>
               <th>ĐB</th>
               <th>Nhất</th>
               <th>Nhì</th>
@@ -286,511 +509,543 @@
               <th>Bảy</th>
             </tr>
           </thead>
-          <tbody id="last7Table">
-            <tr><td colspan="9" class="text-secondary">Đang tải…</td></tr>
+          <tbody id="tblLast7">
+            <tr><td colspan="9" class="muted">Đang tải…</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- TOP 10 (TEXT) -->
-    <div class="row g-3 g-md-4 mb-3 mb-md-4">
-      <div class="col-12 col-lg-6">
-        <div class="card-glass p-3 p-md-4 h-100">
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="h5 mb-0 section-title">Top 10 số lâu chưa về (text)</div>
-            <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
-              data-bs-title="Top 10 số lâu chưa về"
-              data-bs-content="Danh sách 10 số có khoảng cách (delta) lớn nhất so với lần xuất hiện gần nhất, tính theo dữ liệu hiện có.">
-              i
-            </span>
-          </div>
-          <div class="table-responsive">
-            <table class="table mb-0 align-middle">
-              <thead>
-                <tr>
-                  <th style="width: 56px;">#</th>
-                  <th>Số</th>
-                  <th>Delta (ngày)</th>
-                </tr>
-              </thead>
-              <tbody id="top10DeltaTable">
-                <tr><td colspan="3" class="text-secondary">Đang tải…</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <!-- BIỂU ĐỒ -->
+    <div class="section card">
+      <div class="cardHeader">
+        <h2>Biểu đồ (tự ẩn nếu chưa có ảnh)</h2>
+        <div class="muted">Nếu ảnh tồn tại trong <code>/images</code> thì sẽ hiển thị</div>
       </div>
 
-      <div class="col-12 col-lg-6">
-        <div class="card-glass p-3 p-md-4 h-100">
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="h5 mb-0 section-title">Top 10 (30 ngày) (text)</div>
-            <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
-              data-bs-title="Top 10 trong 30 ngày"
-              data-bs-content="Tổng hợp tần suất xuất hiện của các số trong 30 ngày gần nhất (nếu file top10_30d.json có).">
-              i
-            </span>
-          </div>
-          <div class="table-responsive">
-            <table class="table mb-0 align-middle">
-              <thead>
-                <tr>
-                  <th style="width: 56px;">#</th>
-                  <th>Số</th>
-                  <th>Số lần</th>
-                </tr>
-              </thead>
-              <tbody id="top10_30dTable">
-                <tr><td colspan="3" class="text-secondary">Đang tải…</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div class="chartGrid" id="chartGrid">
+        <!-- Card chart mẫu (JS sẽ fill) -->
+      </div>
+
+      <div class="muted" style="margin-top:10px">
+        Mẹo: Trên điện thoại, bấm vào nút <b>i</b> để xem chú thích. Bấm ra ngoài để đóng.
       </div>
     </div>
 
-    <!-- BIỂU ĐỒ (ẢNH) - tự ẩn nếu không có -->
-    <div class="card-glass p-3 p-md-4 mb-4">
-      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div class="h5 mb-0 section-title">Biểu đồ (tự ẩn nếu chưa có ảnh)</div>
-        <div class="text-secondary small">Nếu file ảnh chưa tồn tại trong <span class="mono">/images</span> thì ô đó sẽ tự ẩn.</div>
-      </div>
-
-      <div class="row g-3" id="chartsGrid">
-        <!-- Mỗi chart-card có data-src, JS sẽ kiểm tra tồn tại rồi mới hiện -->
-        <div class="col-12 col-lg-6 chart-card" data-src="./images/top10_delta.png">
-          <div class="card-glass p-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="fw-bold">Top 10 lâu chưa về (chart)</div>
-              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
-                data-bs-title="Biểu đồ Top 10 lâu chưa về"
-                data-bs-content="Ảnh được tạo tự động từ pipeline. Nếu chưa có dữ liệu/ảnh, mục này sẽ tự ẩn.">
-                i
-              </span>
-            </div>
-            <img class="img-chart" alt="Top 10 lâu chưa về" />
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6 chart-card" data-src="./images/top10_30d.png">
-          <div class="card-glass p-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="fw-bold">Top 10 (30 ngày) (chart)</div>
-              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
-                data-bs-title="Biểu đồ Top 10 (30 ngày)"
-                data-bs-content="Ảnh tần suất 30 ngày gần nhất. Tự ẩn nếu file chưa tồn tại.">
-                i
-              </span>
-            </div>
-            <img class="img-chart" alt="Top 10 30 ngày" />
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6 chart-card" data-src="./images/line_30d_total.png">
-          <div class="card-glass p-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="fw-bold">Line 30D Total</div>
-              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
-                data-bs-title="Line 30D Total"
-                data-bs-content="Đường biểu diễn tổng số lần xuất hiện theo ngày trong 30 ngày. Tự ẩn nếu chưa có ảnh.">
-                i
-              </span>
-            </div>
-            <img class="img-chart" alt="30D total" />
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6 chart-card" data-src="./images/line_30d_unique.png">
-          <div class="card-glass p-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="fw-bold">Line 30D Unique</div>
-              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
-                data-bs-title="Line 30D Unique"
-                data-bs-content="Đường biểu diễn số lượng số khác nhau xuất hiện theo ngày trong 30 ngày. Tự ẩn nếu chưa có ảnh.">
-                i
-              </span>
-            </div>
-            <img class="img-chart" alt="30D unique" />
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6 chart-card" data-src="./images/heatmap_1y.png">
-          <div class="card-glass p-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="fw-bold">Heatmap (1 năm)</div>
-              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
-                data-bs-title="Heatmap (1 năm)"
-                data-bs-content="Bản đồ nhiệt theo ngày trong 1 năm. Tự ẩn nếu chưa có ảnh.">
-                i
-              </span>
-            </div>
-            <img class="img-chart" alt="heatmap" />
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6 chart-card" data-src="./images/distribution_1y.png">
-          <div class="card-glass p-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="fw-bold">Distribution (1 năm)</div>
-              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
-                data-bs-title="Distribution (1 năm)"
-                data-bs-content="Phân phối tần suất theo 00–99 trong 1 năm. Tự ẩn nếu chưa có ảnh.">
-                i
-              </span>
-            </div>
-            <img class="img-chart" alt="dist" />
-          </div>
-        </div>
-      </div>
-
-      <div class="text-secondary small mt-3">
-        Mẹo: Nếu bạn đặt tên ảnh khác, chỉ cần sửa <span class="mono">data-src</span> phía trên cho đúng.
-      </div>
+    <div class="footer" style="margin-top:14px">
+      Phiên bản tiếng Việt • Hiển thị tối ưu cho di động • Tự format số theo quy tắc giải
     </div>
-
-    <div class="text-center text-secondary small pb-3">
-    CHUN3NGAN © 2026
-    </div>
-
   </div>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
     // ========= Helpers =========
     const $ = (sel) => document.querySelector(sel);
 
-    async function fetchJson(url, {allow404=false} = {}) {
-      const res = await fetch(url, {cache: "no-store"});
-      if (!res.ok) {
-        if (allow404 && res.status === 404) return null;
-        throw new Error(`${url} HTTP ${res.status}`);
-      }
-      return res.json();
+    function padLeft(n, width){
+      const s = String(n ?? "");
+      return s.padStart(width, "0");
     }
 
-    function padNum(value, width) {
-      // value có thể là number hoặc string
-      if (value === null || value === undefined) return "—";
-      const s = String(value).trim();
-      if (!s) return "—";
-      // Nếu có dấu '-' hay không phải số thuần, vẫn pad theo chuỗi
-      const digits = s.replace(/\D/g,'');
-      // Nếu s là số (vd "2817"), pad. Nếu s có ký tự khác, trả nguyên.
-      if (/^\d+$/.test(s)) return s.padStart(width, "0");
-      if (digits.length && digits.length < width && digits === s) return s.padStart(width, "0");
-      return s;
+    // Quy tắc hiển thị (KHÔNG sửa JSON, chỉ sửa hiển thị):
+    // • ĐB: 5 số • Giải 1: 5 • Giải 2/3: 5 • Giải 4/5: 4 • Giải 6: 3 • Giải 7: 2
+    function formatPrize(key, value){
+      if (value === null || value === undefined || value === "") return "—";
+      const v = Number(value);
+
+      // date không format ở đây
+      if (Number.isNaN(v)) return String(value);
+
+      // map độ dài theo key
+      // special, prize1, prize2_*, prize3_* => 5
+      // prize4_*, prize5_* => 4
+      // prize6_* => 3
+      // prize7_* => 2
+      let w = 0;
+      if (key === "special" || key === "prize1" || key.startsWith("prize2_") || key.startsWith("prize3_")) w = 5;
+      else if (key.startsWith("prize4_") || key.startsWith("prize5_")) w = 4;
+      else if (key.startsWith("prize6_")) w = 3;
+      else if (key.startsWith("prize7_")) w = 2;
+      else w = 0;
+
+      return w ? padLeft(v, w) : String(v);
     }
 
-    // Quy tắc:
-    // ĐB: 5, G1: 5, G2/G3: 5, G4/G5: 4, G6: 3, G7: 2
-    function fmtPrize(key, value) {
-      const k = key.toLowerCase();
-      if (k === "special") return padNum(value, 5);
-      if (k === "prize1") return padNum(value, 5);
-
-      if (k.startsWith("prize2_")) return padNum(value, 5);
-      if (k.startsWith("prize3_")) return padNum(value, 5);
-
-      if (k.startsWith("prize4_")) return padNum(value, 4);
-      if (k.startsWith("prize5_")) return padNum(value, 4);
-
-      if (k.startsWith("prize6_")) return padNum(value, 3);
-
-      if (k.startsWith("prize7_")) return padNum(value, 2);
-
-      return String(value ?? "—");
-    }
-
-    function toVnDisplayDate(isoLike) {
-      // Hiển thị dạng dd/mm/yyyy (phù hợp VN) cho "Ngày" kết quả
-      // isoLike ví dụ: "2026-01-14T00:00:00.000"
+    function formatDateVN(isoLike){
       if (!isoLike) return "—";
       const d = new Date(isoLike);
       if (isNaN(d.getTime())) return String(isoLike);
-      const fmt = new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day:"2-digit", month:"2-digit", year:"numeric" });
-      return fmt.format(d);
+
+      // dd/mm/yyyy theo VN (Asia/Ho_Chi_Minh)
+      return d.toLocaleDateString("vi-VN", { timeZone:"Asia/Ho_Chi_Minh" });
     }
 
-    function setStatus(kind, text) {
+    // Xuất đúng dạng: 2026-01-14T19:25:05.202618+07:00 (microseconds nếu có -> giữ tối đa 6)
+    // Nếu đầu vào có sẵn offset +07:00 thì dùng nguyên. Nếu không -> convert sang +07:00.
+    function toIsoWithVNOffset(input){
+      if (!input) return "—";
+      const s = String(input);
+
+      // Nếu đã có dạng ...+07:00 hoặc +0700 hoặc Z hoặc +/-hh:mm, giữ/chuẩn hoá nhẹ
+      const hasTZ = /([zZ]|[+\-]\d{2}:?\d{2})$/.test(s);
+      if (hasTZ){
+        // Chuẩn hoá +0700 => +07:00
+        return s.replace(/([+\-]\d{2})(\d{2})$/, "$1:$2");
+      }
+
+      // Không có timezone => hiểu là UTC (hoặc local). Ta coi là UTC để ổn định.
+      const d = new Date(s + "Z");
+      if (isNaN(d.getTime())) {
+        // fallback: parse bình thường rồi convert
+        const d2 = new Date(s);
+        if (isNaN(d2.getTime())) return s;
+        return isoOffsetFromUTCms(d2.getTime(), 420, 3) + "+07:00";
+      }
+
+      // Convert UTC->+07:00
+      return isoOffsetFromUTCms(d.getTime(), 420, 3) + "+07:00";
+    }
+
+    // Build ISO string at fixed offset using UTC getters (no timezone drift)
+    // precisionMs: 3 => .SSS ; can output 6 by reading from input is impossible, so keep 3.
+    function isoOffsetFromUTCms(utcMs, offsetMin, precisionMs=3){
+      const ms = utcMs + offsetMin*60*1000; // shift into "fake UTC" = VN time
+      const d = new Date(ms);
+
+      const Y = d.getUTCFullYear();
+      const M = String(d.getUTCMonth()+1).padStart(2,"0");
+      const D = String(d.getUTCDate()).padStart(2,"0");
+      const h = String(d.getUTCHours()).padStart(2,"0");
+      const m = String(d.getUTCMinutes()).padStart(2,"0");
+      const s = String(d.getUTCSeconds()).padStart(2,"0");
+      const ms3 = String(d.getUTCMilliseconds()).padStart(3,"0");
+
+      // luôn xuất .SSS (bạn cần microseconds thực sự thì phải ghi từ Python vào meta)
+      return `${Y}-${M}-${D}T${h}:${m}:${s}.${ms3}`;
+    }
+
+    async function fetchJson(url, opts={}){
+      const { allow404=false } = opts;
+      const res = await fetch(url, { cache:"no-store" });
+      if (!res.ok){
+        if (allow404 && res.status === 404) return null;
+        throw new Error(`${url} HTTP ${res.status}`);
+      }
+      return await res.json();
+    }
+
+    function setStatus(kind, text){
       const dot = $("#statusDot");
-      const t = $("#statusText");
-      dot.classList.remove("ok","warn","bad");
-      dot.classList.add(kind);
-      t.textContent = text;
+      const pill = $("#pillStatus");
+      dot.classList.remove("ok","bad");
+      pill.style.borderColor = "";
+
+      if (kind === "ok"){
+        dot.classList.add("ok");
+      } else if (kind === "bad"){
+        dot.classList.add("bad");
+      }
+      $("#statusText").innerHTML = text;
+
+      const line = $("#lineStatus");
+      const lineDot = $("#lineDot");
+      line.classList.remove("ok","warn","bad");
+      lineDot.classList.remove("ok","bad");
+
+      if (kind === "ok"){ line.classList.add("ok"); lineDot.classList.add("ok"); }
+      else if (kind === "warn"){ line.classList.add("warn"); }
+      else { line.classList.add("bad"); lineDot.classList.add("bad"); }
+
+      $("#lineText").textContent = stripHtml(text);
     }
 
-    function showTopError(errText) {
-      $("#topError").classList.remove("d-none");
-      $("#topErrorText").textContent = errText;
-      setStatus("bad", "Lỗi tải dữ liệu");
+    function stripHtml(html){
+      const div = document.createElement("div");
+      div.innerHTML = html;
+      return div.textContent || div.innerText || "";
+    }
+
+    function mkRow(label, values){
+      const tr = document.createElement("tr");
+      const td1 = document.createElement("td");
+      const td2 = document.createElement("td");
+      td1.textContent = label;
+
+      const chips = document.createElement("div");
+      chips.className = "chips";
+      values.forEach(v=>{
+        const c = document.createElement("span");
+        c.className = "chip";
+        c.textContent = v;
+        chips.appendChild(c);
+      });
+      td2.appendChild(chips);
+
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      return tr;
+    }
+
+    function safeArray(v){
+      return Array.isArray(v) ? v : (v ? [v] : []);
+    }
+
+    function getTwoLastDigits(s){
+      if (!s || s === "—") return "—";
+      const x = String(s).replace(/\D/g,"");
+      if (!x) return "—";
+      return x.slice(-2).padStart(2,"0");
+    }
+
+    // ========= Charts =========
+    const CHARTS = [
+      { file: "top10.jpg", title: "Top 10 số lâu chưa về (text)", tip: "Danh sách 10 số có số ngày (delta) lớn nhất tính đến hiện tại." },
+      { file: "top10_30d.jpg", title: "Top 10 số lâu chưa về (30 ngày)", tip: "Top 10 tính riêng theo cửa sổ 30 ngày gần nhất." },
+      { file: "delta.jpg", title: "Phân bố delta (ngày)", tip: "Biểu đồ phân bố số ngày chưa về (delta) theo từng số." },
+      { file: "delta_top_10.jpg", title: "Top delta nổi bật", tip: "Nhóm số có delta cao nhất, giúp nhìn nhanh các số nổi bật." },
+      { file: "distribution.jpg", title: "Phân phối 2 số cuối (tần suất)", tip: "Tần suất xuất hiện 2 số cuối theo lịch sử dữ liệu." },
+      { file: "heatmap.jpg", title: "Heatmap 2 số cuối", tip: "Bản đồ nhiệt tần suất theo hai chữ số (00–99)." },
+      { file: "line_30d_total.jpg", title: "Xu hướng 30 ngày: tổng lượt", tip: "Đường xu hướng tổng lượt xuất hiện theo từng ngày trong 30 ngày." },
+      { file: "line_30d_unique.jpg", title: "Xu hướng 30 ngày: số lượng số khác nhau", tip: "Đường xu hướng số lượng 2 số cuối khác nhau theo từng ngày trong 30 ngày." },
+    ];
+
+    function renderCharts(){
+      const grid = $("#chartGrid");
+      grid.innerHTML = "";
+
+      CHARTS.forEach((c, idx)=>{
+        const card = document.createElement("div");
+        card.className = "chartCard";
+        card.dataset.file = c.file;
+
+        const head = document.createElement("div");
+        head.className = "chartHead";
+
+        const t = document.createElement("div");
+        t.style.display = "flex";
+        t.style.alignItems = "center";
+        t.style.gap = "10px";
+
+        const h = document.createElement("div");
+        h.className = "chartTitle";
+        h.textContent = c.title;
+
+        const infoWrap = document.createElement("span");
+        infoWrap.className = "infoWrap";
+
+        const btn = document.createElement("button");
+        btn.className = "infoBtn";
+        btn.type = "button";
+        btn.setAttribute("aria-label", "Chú thích biểu đồ");
+        btn.textContent = "i";
+
+        const pop = document.createElement("div");
+        pop.className = "popover";
+        pop.innerHTML = `<b>Chú thích</b><div style="height:6px"></div>${escapeHtml(c.tip)}`;
+
+        infoWrap.appendChild(btn);
+        infoWrap.appendChild(pop);
+
+        t.appendChild(h);
+        t.appendChild(infoWrap);
+
+        head.appendChild(t);
+
+        const body = document.createElement("div");
+        body.className = "chartBody";
+
+        const img = document.createElement("img");
+        img.alt = c.title;
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.dataset.src = `./images/${c.file}`;
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420">
+             <rect width="100%" height="100%" fill="rgba(2,6,23,0.03)"/>
+             <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="rgba(2,6,23,0.35)" font-size="18">
+               Đang kiểm tra ảnh…
+             </text>
+           </svg>`
+        );
+
+        body.appendChild(img);
+        card.appendChild(head);
+        card.appendChild(body);
+        grid.appendChild(card);
+      });
+
+      // Sau khi render, kiểm tra ảnh tồn tại thì gán thật, không tồn tại thì ẩn card
+      checkAndLoadChartImages();
+      enableMobilePopovers();
+    }
+
+    function checkAndLoadChartImages(){
+      const cards = Array.from(document.querySelectorAll(".chartCard"));
+      cards.forEach(card=>{
+        const img = card.querySelector("img");
+        const url = img.dataset.src;
+
+        const test = new Image();
+        test.onload = () => {
+          img.src = url + `?v=${Date.now()}`; // bust cache nhẹ khi dev
+          card.style.display = "";
+        };
+        test.onerror = () => {
+          card.style.display = "none";
+        };
+        test.src = url + `?probe=${Date.now()}`;
+      });
+
+      // Nếu tất cả đều ẩn -> hiện 1 box thông báo
+      setTimeout(()=>{
+        const anyVisible = cards.some(c=>c.style.display !== "none");
+        if (!anyVisible){
+          $("#chartGrid").innerHTML =
+            `<div class="statusLine warn" style="grid-column:1/-1">
+               <span class="dot"></span>
+               <div class="statusText">
+                 Hiện chưa có ảnh biểu đồ trong thư mục <code>/images</code> (hoặc tên file không khớp). Khi workflow tạo ảnh, các ô sẽ tự hiện.
+               </div>
+             </div>`;
+        }
+      }, 350);
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (m)=>({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m]));
+    }
+
+    // ========= Tooltip click (mobile) =========
+    function enableMobilePopovers(){
+      document.addEventListener("click", (e) => {
+        const btn = e.target.closest(".infoBtn");
+
+        // bấm trong popover -> không đóng
+        if (e.target.closest(".popover")) return;
+
+        // bấm ngoài -> đóng hết
+        if (!btn){
+          document.querySelectorAll(".infoBtn.open").forEach(x => x.classList.remove("open"));
+          return;
+        }
+
+        // toggle đúng nút
+        document.querySelectorAll(".infoBtn.open").forEach(x => {
+          if (x !== btn) x.classList.remove("open");
+        });
+        btn.classList.toggle("open");
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+
+      document.addEventListener("touchstart", (e) => {
+        const btn = e.target.closest(".infoBtn");
+        if (!btn && !e.target.closest(".popover")){
+          document.querySelectorAll(".infoBtn.open").forEach(x => x.classList.remove("open"));
+        }
+      }, {passive:true});
     }
 
     // ========= Render latest =========
-    function renderLatest(row) {
-      // row: object của 1 ngày
-      const dateStr = toVnDisplayDate(row?.date);
-      $("#latestDate").textContent = dateStr;
+    function renderLatestFromItem(item){
+      const dateVN = formatDateVN(item.date);
+      const special = formatPrize("special", item.special);
 
-      const special5 = fmtPrize("special", row?.special);
-      $("#latestSpecial").textContent = special5;
-      $("#latestDe").textContent = special5.slice(-2);
+      $("#statDate").textContent = dateVN;
+      $("#statSpecial").textContent = special;
+      $("#statDe").textContent = getTwoLastDigits(special);
 
-      const groups = [
-        { label: "Giải ĐB", values: [fmtPrize("special", row?.special)] },
-        { label: "Giải nhất", values: [fmtPrize("prize1", row?.prize1)] },
-        { label: "Giải nhì", values: [fmtPrize("prize2_1", row?.prize2_1), fmtPrize("prize2_2", row?.prize2_2)] },
-        { label: "Giải ba", values: [
-          fmtPrize("prize3_1", row?.prize3_1), fmtPrize("prize3_2", row?.prize3_2), fmtPrize("prize3_3", row?.prize3_3),
-          fmtPrize("prize3_4", row?.prize3_4), fmtPrize("prize3_5", row?.prize3_5), fmtPrize("prize3_6", row?.prize3_6),
-        ] },
-        { label: "Giải tư", values: [
-          fmtPrize("prize4_1", row?.prize4_1), fmtPrize("prize4_2", row?.prize4_2),
-          fmtPrize("prize4_3", row?.prize4_3), fmtPrize("prize4_4", row?.prize4_4),
-        ] },
-        { label: "Giải năm", values: [
-          fmtPrize("prize5_1", row?.prize5_1), fmtPrize("prize5_2", row?.prize5_2), fmtPrize("prize5_3", row?.prize5_3),
-          fmtPrize("prize5_4", row?.prize5_4), fmtPrize("prize5_5", row?.prize5_5), fmtPrize("prize5_6", row?.prize5_6),
-        ] },
-        { label: "Giải sáu", values: [
-          fmtPrize("prize6_1", row?.prize6_1), fmtPrize("prize6_2", row?.prize6_2), fmtPrize("prize6_3", row?.prize6_3),
-        ] },
-        { label: "Giải bảy", values: [
-          fmtPrize("prize7_1", row?.prize7_1), fmtPrize("prize7_2", row?.prize7_2),
-          fmtPrize("prize7_3", row?.prize7_3), fmtPrize("prize7_4", row?.prize7_4),
-        ] },
-      ];
+      const tbody = $("#tblLatest");
+      tbody.innerHTML = "";
 
-      const tbody = $("#latestTable");
-      tbody.innerHTML = groups.map(g => {
-        const v = g.values.filter(x => x && x !== "—").join(", ");
-        return `<tr>
-          <td class="text-secondary fw-semibold">${g.label}</td>
-          <td class="mono">${v || "—"}</td>
-        </tr>`;
-      }).join("");
+      // Build groups
+      const g = {
+        "Giải ĐB": [formatPrize("special", item.special)],
+        "Giải nhất": [formatPrize("prize1", item.prize1)],
+        "Giải nhì": [formatPrize("prize2_1", item.prize2_1), formatPrize("prize2_2", item.prize2_2)],
+        "Giải ba": [
+          formatPrize("prize3_1", item.prize3_1),
+          formatPrize("prize3_2", item.prize3_2),
+          formatPrize("prize3_3", item.prize3_3),
+          formatPrize("prize3_4", item.prize3_4),
+          formatPrize("prize3_5", item.prize3_5),
+          formatPrize("prize3_6", item.prize3_6),
+        ],
+        "Giải tư": [
+          formatPrize("prize4_1", item.prize4_1),
+          formatPrize("prize4_2", item.prize4_2),
+          formatPrize("prize4_3", item.prize4_3),
+          formatPrize("prize4_4", item.prize4_4),
+        ],
+        "Giải năm": [
+          formatPrize("prize5_1", item.prize5_1),
+          formatPrize("prize5_2", item.prize5_2),
+          formatPrize("prize5_3", item.prize5_3),
+          formatPrize("prize5_4", item.prize5_4),
+          formatPrize("prize5_5", item.prize5_5),
+          formatPrize("prize5_6", item.prize5_6),
+        ],
+        "Giải sáu": [
+          formatPrize("prize6_1", item.prize6_1),
+          formatPrize("prize6_2", item.prize6_2),
+          formatPrize("prize6_3", item.prize6_3),
+        ],
+        "Giải bảy": [
+          formatPrize("prize7_1", item.prize7_1),
+          formatPrize("prize7_2", item.prize7_2),
+          formatPrize("prize7_3", item.prize7_3),
+          formatPrize("prize7_4", item.prize7_4),
+        ],
+      };
+
+      Object.entries(g).forEach(([label, arr])=>{
+        const values = arr.filter(x=>x && x !== "—");
+        tbody.appendChild(mkRow(label, values.length ? values : ["—"]));
+      });
     }
 
-    // ========= Render last 7 =========
-    function renderLast7(list) {
-      const tbody = $("#last7Table");
-      if (!Array.isArray(list) || list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-secondary">Chưa có dữ liệu.</td></tr>`;
+    // ========= Render last7 =========
+    function renderLast7(list){
+      const tbody = $("#tblLast7");
+      tbody.innerHTML = "";
+
+      if (!Array.isArray(list) || list.length === 0){
+        tbody.innerHTML = `<tr><td colspan="9" class="muted">Chưa có dữ liệu last7.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = list.map(row => {
-        const date = toVnDisplayDate(row?.date);
-        const db = fmtPrize("special", row?.special);
-        const nhat = fmtPrize("prize1", row?.prize1);
-        const nhi = [fmtPrize("prize2_1", row?.prize2_1), fmtPrize("prize2_2", row?.prize2_2)].join(", ");
-        const ba = [
-          fmtPrize("prize3_1", row?.prize3_1), fmtPrize("prize3_2", row?.prize3_2), fmtPrize("prize3_3", row?.prize3_3),
-          fmtPrize("prize3_4", row?.prize3_4), fmtPrize("prize3_5", row?.prize3_5), fmtPrize("prize3_6", row?.prize3_6),
-        ].join(", ");
-        const tu = [
-          fmtPrize("prize4_1", row?.prize4_1), fmtPrize("prize4_2", row?.prize4_2),
-          fmtPrize("prize4_3", row?.prize4_3), fmtPrize("prize4_4", row?.prize4_4),
-        ].join(", ");
-        const nam = [
-          fmtPrize("prize5_1", row?.prize5_1), fmtPrize("prize5_2", row?.prize5_2), fmtPrize("prize5_3", row?.prize5_3),
-          fmtPrize("prize5_4", row?.prize5_4), fmtPrize("prize5_5", row?.prize5_5), fmtPrize("prize5_6", row?.prize5_6),
-        ].join(", ");
-        const sau = [fmtPrize("prize6_1", row?.prize6_1), fmtPrize("prize6_2", row?.prize6_2), fmtPrize("prize6_3", row?.prize6_3)].join(", ");
-        const bay = [fmtPrize("prize7_1", row?.prize7_1), fmtPrize("prize7_2", row?.prize7_2), fmtPrize("prize7_3", row?.prize7_3), fmtPrize("prize7_4", row?.prize7_4)].join(", ");
+      list.forEach(item=>{
+        const tr = document.createElement("tr");
 
-        return `<tr>
-          <td class="fw-semibold">${date}</td>
-          <td class="mono">${db}</td>
-          <td class="mono">${nhat}</td>
-          <td class="mono">${nhi}</td>
-          <td class="mono">${ba}</td>
-          <td class="mono">${tu}</td>
-          <td class="mono">${nam}</td>
-          <td class="mono">${sau}</td>
-          <td class="mono">${bay}</td>
-        </tr>`;
-      }).join("");
-    }
+        const tdDate = document.createElement("td");
+        tdDate.textContent = formatDateVN(item.date);
 
-    // ========= Render top10 tables =========
-    function renderTop10Delta(data) {
-      const tbody = $("#top10DeltaTable");
-      if (!data) {
-        tbody.innerHTML = `<tr><td colspan="3" class="text-secondary">Chưa có file top10_delta.json.</td></tr>`;
-        return;
-      }
+        const tdDB = document.createElement("td");
+        tdDB.textContent = formatPrize("special", item.special);
 
-      // Cho phép 2 format:
-      // 1) [{ "so": "17", "delta": 123 }, ...]
-      // 2) { "items": [...] }
-      const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
-      if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="3" class="text-secondary">Chưa có dữ liệu Top 10.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = items.slice(0,10).map((it, idx) => {
-        const so = padNum(it.so ?? it.num ?? it.number ?? it.value, 2);
-        const delta = it.delta ?? it.days ?? it.d ?? "—";
-        return `<tr>
-          <td class="text-secondary fw-semibold">${idx+1}</td>
-          <td class="mono fw-bold">${so}</td>
-          <td class="mono">${delta}</td>
-        </tr>`;
-      }).join("");
-    }
+        const td1 = document.createElement("td");
+        td1.textContent = formatPrize("prize1", item.prize1);
 
-    function renderTop10_30d(data) {
-      const tbody = $("#top10_30dTable");
-      if (!data) {
-        tbody.innerHTML = `<tr><td colspan="3" class="text-secondary">Chưa có file top10_30d.json.</td></tr>`;
-        return;
-      }
-      const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
-      if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="3" class="text-secondary">Chưa có dữ liệu Top 10 (30 ngày).</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = items.slice(0,10).map((it, idx) => {
-        const so = padNum(it.so ?? it.num ?? it.number ?? it.value, 2);
-        const count = it.count ?? it.times ?? it.freq ?? "—";
-        return `<tr>
-          <td class="text-secondary fw-semibold">${idx+1}</td>
-          <td class="mono fw-bold">${so}</td>
-          <td class="mono">${count}</td>
-        </tr>`;
-      }).join("");
-    }
+        const td2 = document.createElement("td");
+        td2.textContent = [
+          formatPrize("prize2_1", item.prize2_1),
+          formatPrize("prize2_2", item.prize2_2),
+        ].filter(x=>x!=="—").join(", ");
 
-    // ========= Charts: auto hide if image not exist =========
-    async function checkImageExists(url) {
-      // Same-origin: HEAD thường OK. Nếu HEAD fail, thử GET.
-      try {
-        const res = await fetch(url, { method: "HEAD", cache: "no-store" });
-        if (res.ok) return true;
-        if (res.status === 404) return false;
-      } catch (e) {}
-      try {
-        const res2 = await fetch(url, { method: "GET", cache: "no-store" });
-        return res2.ok;
-      } catch (e) {
-        return false;
-      }
-    }
+        const td3 = document.createElement("td");
+        td3.textContent = [
+          formatPrize("prize3_1", item.prize3_1),
+          formatPrize("prize3_2", item.prize3_2),
+          formatPrize("prize3_3", item.prize3_3),
+          formatPrize("prize3_4", item.prize3_4),
+          formatPrize("prize3_5", item.prize3_5),
+          formatPrize("prize3_6", item.prize3_6),
+        ].filter(x=>x!=="—").join(", ");
 
-    async function initCharts() {
-      const cards = Array.from(document.querySelectorAll(".chart-card"));
-      let anyShown = false;
+        const td4 = document.createElement("td");
+        td4.textContent = [
+          formatPrize("prize4_1", item.prize4_1),
+          formatPrize("prize4_2", item.prize4_2),
+          formatPrize("prize4_3", item.prize4_3),
+          formatPrize("prize4_4", item.prize4_4),
+        ].filter(x=>x!=="—").join(", ");
 
-      await Promise.all(cards.map(async (card) => {
-        const src = card.getAttribute("data-src");
-        const ok = await checkImageExists(src);
-        if (!ok) {
-          card.classList.add("d-none");
-          return;
-        }
-        const img = card.querySelector("img");
-        img.src = src + "?v=" + Date.now(); // bust cache
-        anyShown = true;
-      }));
+        const td5 = document.createElement("td");
+        td5.textContent = [
+          formatPrize("prize5_1", item.prize5_1),
+          formatPrize("prize5_2", item.prize5_2),
+          formatPrize("prize5_3", item.prize5_3),
+          formatPrize("prize5_4", item.prize5_4),
+          formatPrize("prize5_5", item.prize5_5),
+          formatPrize("prize5_6", item.prize5_6),
+        ].filter(x=>x!=="—").join(", ");
 
-      if (!anyShown) {
-        // Nếu tất cả đều ẩn, show 1 dòng gợi ý
-        const grid = $("#chartsGrid");
-        const hint = document.createElement("div");
-        hint.className = "col-12";
-        hint.innerHTML = `<div class="alert alert-warning mb-0">
-          Hiện chưa có ảnh biểu đồ trong thư mục <span class="mono">/images</span>. Khi workflow tạo ảnh, các ô sẽ tự hiện.
-        </div>`;
-        grid.appendChild(hint);
-      }
-    }
+        const td6 = document.createElement("td");
+        td6.textContent = [
+          formatPrize("prize6_1", item.prize6_1),
+          formatPrize("prize6_2", item.prize6_2),
+          formatPrize("prize6_3", item.prize6_3),
+        ].filter(x=>x!=="—").join(", ");
 
-    // ========= Popovers (icon i) =========
-    function initPopovers() {
-      const els = document.querySelectorAll('[data-bs-toggle="popover"]');
-      els.forEach(el => {
-        new bootstrap.Popover(el, {
-          trigger: "hover focus", // di chuột hoặc bấm
-          container: "body"
-        });
+        const td7 = document.createElement("td");
+        td7.textContent = [
+          formatPrize("prize7_1", item.prize7_1),
+          formatPrize("prize7_2", item.prize7_2),
+          formatPrize("prize7_3", item.prize7_3),
+          formatPrize("prize7_4", item.prize7_4),
+        ].filter(x=>x!=="—").join(", ");
+
+        tr.append(tdDate, tdDB, td1, td2, td3, td4, td5, td6, td7);
+        tbody.appendChild(tr);
       });
     }
 
     // ========= Main =========
-    async function main() {
-      initPopovers();
+    async function main(){
+      renderCharts();
 
-      // 1) Load meta trước để hiển thị Updated(VN) đúng dạng ISO +07:00 nếu có
+      // 1) Load meta trước để hiển thị Updated(VN)
       let meta = null;
-      try {
-        meta = await fetchJson("./data/site_meta.json", {allow404:true});
-      } catch (e) {
-        // không chặn trang nếu meta lỗi
+      try{
+        meta = await fetchJson("./data/site_meta.json", { allow404:true });
+      }catch(e){
+        // meta lỗi không chặn trang
+        meta = null;
       }
 
-      if (meta) {
-        $("#metaUpdatedVn").textContent = meta.updated_at_vn || meta.updated_vn || "—";
+      if (meta){
+        // Updated (VN): ưu tiên meta.updated_at_vn / meta.updated_vn
+        const updatedVnRaw = meta.updated_at_vn || meta.updated_vn || meta.updated_at || meta.updated || meta.updated_at_utc || meta.updated_utc || "";
+        const updatedVn = toIsoWithVNOffset(updatedVnRaw);
+        $("#metaUpdated").textContent = updatedVn || "—";
+
         $("#metaSha").textContent = meta.sha || "—";
         $("#metaRun").textContent = meta.run_id || meta.run || "—";
         $("#metaSource").textContent = meta.source || "—";
 
-        // Status theo note
-        const note = (meta.note || "").toLowerCase();
-        if (note.includes("chưa") || note.includes("chua") || note.includes("no data")) {
-          setStatus("warn", "Online • Chưa có dữ liệu");
+        // Status theo note nếu có
+        const note = String(meta.note || "").toLowerCase();
+        if (note.includes("chưa") || note.includes("chua") || note.includes("no data")){
+          setStatus("warn", "<b>Online</b> • Chưa có dữ liệu");
         } else {
-          setStatus("ok", "Online • Đã tải dữ liệu");
+          setStatus("ok", "<b>Online</b> • Đã tải dữ liệu");
         }
       } else {
-        $("#metaUpdatedVn").textContent = "—";
+        $("#metaUpdated").textContent = "—";
         $("#metaSha").textContent = "—";
         $("#metaRun").textContent = "—";
         $("#metaSource").textContent = "—";
-        setStatus("warn", "Online • Chưa có meta");
+        setStatus("warn", "<b>Online</b> • Chưa có meta (site_meta.json)");
       }
 
-      // 2) Load dữ liệu chính
-      try {
-        const xsmb = await fetchJson("./data/xsmb.json");
-        // xsmb.json của bạn là mảng: [ {date, special, ...} ]
-        const latest = Array.isArray(xsmb) && xsmb.length ? xsmb[0] : null;
+      // 2) Load xsmb.json (latest list)
+      let xsmb = null;
+      try{
+        xsmb = await fetchJson("./data/xsmb.json");
+      }catch(e){
+        setStatus("bad", `<b>Lỗi</b> • ./data/xsmb.json ${escapeHtml(e.message).replace("./data/xsmb.json ","")}`);
+        $("#tblLatest").innerHTML = `<tr><td>Lỗi</td><td>${escapeHtml(e.message)}</td></tr>`;
+        return;
+      }
 
-        if (!latest) {
-          $("#latestTable").innerHTML = `<tr><td colspan="2" class="text-secondary">Chưa có dữ liệu hôm nay.</td></tr>`;
-          $("#latestDate").textContent = "—";
-          $("#latestSpecial").textContent = "—";
-          $("#latestDe").textContent = "—";
-        } else {
-          // Format "special" thành 5 số khi hiển thị (vd 2817 -> 02817)
-          renderLatest(latest);
-        }
+      if (!Array.isArray(xsmb) || xsmb.length === 0){
+        setStatus("warn", "<b>Online</b> • xsmb.json trống (chưa có dữ liệu)");
+        $("#tblLatest").innerHTML = `<tr><td colspan="2" class="muted">Chưa có dữ liệu hôm nay.</td></tr>`;
+      } else {
+        // Lấy phần tử cuối cùng (mới nhất)
+        const latest = xsmb[xsmb.length - 1];
+        renderLatestFromItem(latest);
+      }
 
-        // last7
-        const last7 = await fetchJson("./data/last7.json", {allow404:true});
+      // 3) Load last7.json
+      try{
+        const last7 = await fetchJson("./data/last7.json", { allow404:true });
         if (last7) renderLast7(last7);
-        else $("#last7Table").innerHTML = `<tr><td colspan="9" class="text-secondary">Chưa có file last7.json.</td></tr>`;
-
-        // top10 json (text)
-        const top10Delta = await fetchJson("./data/top10_delta.json", {allow404:true});
-        renderTop10Delta(top10Delta);
-
-        const top10_30d = await fetchJson("./data/top10_30d.json", {allow404:true});
-        renderTop10_30d(top10_30d);
-
-        // Nếu load xsmb ok -> status ok (trừ khi meta note báo chưa có)
-        if (!meta || !(String(meta.note||"").toLowerCase().includes("chưa") || String(meta.note||"").toLowerCase().includes("chua"))) {
-          setStatus("ok", "Online • Đã tải dữ liệu");
-        }
-
-      } catch (e) {
-        showTopError(String(e.message || e));
+        else $("#tblLast7").innerHTML = `<tr><td colspan="9" class="muted">Chưa có file last7.json</td></tr>`;
+      }catch(e){
+        $("#tblLast7").innerHTML = `<tr><td colspan="9" class="muted">Lỗi last7.json: ${escapeHtml(e.message)}</td></tr>`;
       }
-
-      // 3) Charts
-      await initCharts();
     }
 
     main();
