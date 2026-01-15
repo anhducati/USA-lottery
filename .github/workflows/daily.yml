@@ -2,10 +2,7 @@ name: Daily Update (XSMB) + Deploy Pages
 
 on:
   schedule:
-    # 18:30, 18:35, 18:40 VN (UTC+7)
-    - cron: "30 11 * * *"
-    - cron: "35 11 * * *"
-    - cron: "40 11 * * *"
+    - cron: "35 11 * * *"   # 18:35 VN (UTC+7)
   workflow_dispatch: {}
 
 permissions:
@@ -41,20 +38,23 @@ jobs:
           echo "Running XSMB crawler..."
           python src/main.py
 
-      - name: Ensure data/xsmb.json exists (create placeholder if missing)
+      - name: Ensure required files exist
         run: |
+          set -e
           mkdir -p data images
+          touch .nojekyll
+
           if [ ! -f "data/xsmb.json" ]; then
             python - <<'PY'
-          import json, pathlib
-          path = pathlib.Path("data/xsmb.json")
-          path.write_text(json.dumps([], ensure_ascii=False), encoding="utf-8")
-          print("Created placeholder data/xsmb.json ✅")
-          PY
-                    fi
+import json, pathlib
+path = pathlib.Path("data/xsmb.json")
+path.write_text(json.dumps([], ensure_ascii=False), encoding="utf-8")
+print("Created placeholder data/xsmb.json ✅")
+PY
+          fi
 
-                - name: Commit & push if changed
-                  run: |
+      - name: Commit & push if changed
+        run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -68,16 +68,13 @@ jobs:
             git push
           fi
 
-          - name: Disable Jekyll
-            run: touch .nojekyll
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
-          - name: Configure Pages
-            uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
 
-          - name: Upload artifact
-            uses: actions/upload-pages-artifact@v3
-            with:
-              path: .
-
-          - name: Deploy to GitHub Pages
-            uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
