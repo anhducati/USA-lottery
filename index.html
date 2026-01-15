@@ -2,571 +2,798 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>XSMB Daily Dashboard</title>
-  <meta name="description" content=" XSMB " />
+
+  <!-- Bootstrap 5 (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
     :root{
-      --bg:#f7fafc;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#475569;
-      --line:#e2e8f0;
-      --shadow: 0 10px 26px rgba(2,6,23,.08);
-      --radius:18px;
-      --radius2:16px;
-
-      --warn:#f59e0b;
-      --ok:#22c55e;
-      --err:#ef4444;
+      --card-radius: 18px;
+      --glass: rgba(255,255,255,.72);
+      --glass-2: rgba(255,255,255,.58);
+      --border: rgba(15, 23, 42, .10);
+      --shadow: 0 12px 30px rgba(0,0,0,.08);
+      --shadow2: 0 8px 18px rgba(0,0,0,.08);
     }
-    *{box-sizing:border-box}
     body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      color:var(--text);
       background:
-        radial-gradient(900px 420px at 10% 0%, rgba(37,99,235,.15), transparent 60%),
-        radial-gradient(900px 420px at 90% 5%, rgba(34,197,94,.12), transparent 55%),
-        radial-gradient(900px 520px at 50% 105%, rgba(6,182,212,.10), transparent 60%),
-        var(--bg);
-      min-height:100vh;
-    }
-    a{color:#2563eb;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .wrap{max-width:1200px;margin:0 auto;padding:22px 16px 56px}
-
-    /* ===== LED frame ===== */
-    .rainbow-frame{
-      position:relative;
-      border-radius: calc(var(--radius) + 6px);
-      padding: 5px;
-      background: linear-gradient(90deg,
-        #ff0000,
-        #ff7a00,
-        #ffe600,
-        #00d12f,
-        #00c2ff,
-        #2f5bff,
-        #b100ff,
-        #ff0000
-      );
-      background-size: 400% 100%;
-      animation: ledFlow 3.2s linear infinite;
-      box-shadow: 0 18px 40px rgba(2,6,23,.10);
-    }
-    .rainbow-frame::before{
-      content:"";
-      position:absolute; inset:-3px;
-      border-radius: calc(var(--radius) + 10px);
-      background: inherit;
-      background-size: 400% 100%;
-      animation: ledFlow 3.2s linear infinite;
-      filter: blur(14px);
-      opacity:.35;
-      z-index:0;
-    }
-    .rainbow-inner{
-      position:relative;
-      z-index:1;
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.82);
-      backdrop-filter: blur(10px);
-      border:1px solid rgba(255,255,255,.75);
-    }
-    @keyframes ledFlow{
-      0%   { background-position:   0% 50%; }
-      100% { background-position: 400% 50%; }
+        radial-gradient(1200px 500px at 18% 6%, rgba(34,197,94,.22), transparent 55%),
+        radial-gradient(900px 520px at 92% 8%, rgba(59,130,246,.22), transparent 60%),
+        radial-gradient(900px 600px at 55% 100%, rgba(236,72,153,.12), transparent 60%),
+        linear-gradient(180deg, #f8fafc 0%, #ffffff 55%, #f8fafc 100%);
+      color:#0f172a;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* states */
-    .rainbow-frame.is-loading{
-      animation: ledFlow 2.6s linear infinite, ledPulse 0.9s ease-in-out infinite;
-    }
-    .rainbow-frame.is-loading::before{
-      animation: ledFlow 2.6s linear infinite, ledPulse 0.9s ease-in-out infinite;
-      opacity:.55;
-    }
-    .rainbow-frame.is-success{
-      animation: ledFlow 10s linear infinite;
-    }
-    .rainbow-frame.is-success::before{
-      animation: ledFlow 10s linear infinite;
-      opacity:.25;
-    }
-    .rainbow-frame.is-warn{
-      animation: ledFlow 3.2s linear infinite, warnPulse 1.0s ease-in-out infinite;
-    }
-    .rainbow-frame.is-warn::before{
-      animation: ledFlow 3.2s linear infinite, warnPulse 1.0s ease-in-out infinite;
-      opacity:.60;
-    }
-    .rainbow-frame.is-error{
-      animation: ledFlow 2.2s linear infinite, errPulse 0.6s ease-in-out infinite;
-    }
-    .rainbow-frame.is-error::before{
-      animation: ledFlow 2.2s linear infinite, errPulse 0.6s ease-in-out infinite;
-      opacity:.65;
-    }
-    @keyframes ledPulse{
-      0%,100% { filter: saturate(1.05) brightness(1.00); }
-      50%     { filter: saturate(1.40) brightness(1.14); }
-    }
-    @keyframes warnPulse{
-      0%,100% { filter: saturate(1.15) brightness(1.02); box-shadow: 0 18px 40px rgba(245,158,11,.18); }
-      50%     { filter: saturate(1.60) brightness(1.18); box-shadow: 0 18px 40px rgba(245,158,11,.28); }
-    }
-    @keyframes errPulse{
-      0%,100% { filter: saturate(1.10) brightness(1.02); box-shadow: 0 18px 40px rgba(239,68,68,.18); }
-      50%     { filter: saturate(1.65) brightness(1.20); box-shadow: 0 18px 40px rgba(239,68,68,.30); }
+    .container-max{
+      max-width: 1200px;
     }
 
-    .topbar{
-      display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap;
-      padding:14px 14px;
-    }
-    .brand{display:flex; gap:12px; align-items:center}
-    .logo{
-      width:44px;height:44px;border-radius:14px;
-      background: conic-gradient(from 210deg,
-        #ff0000, #ff7a00, #ffe600, #00d12f, #00c2ff, #2f5bff, #b100ff, #ff0000
-      );
-      box-shadow: 0 12px 22px rgba(2,6,23,.12);
-      border:1px solid rgba(255,255,255,.7);
-    }
-    .brand h1{margin:0;font-size:18px}
-    .brand .sub{font-size:12px;color:var(--muted);margin-top:2px}
-
-    .chips{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end}
-    .chip{
-      font-size:12px; color:var(--muted);
-      padding:8px 10px; border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.85);
-      display:flex; gap:8px; align-items:center;
-      white-space:nowrap;
-    }
-    .dot{width:8px;height:8px;border-radius:99px;background:var(--ok); box-shadow:0 0 0 4px rgba(34,197,94,.16)}
-    .dot.warn{background:var(--warn); box-shadow:0 0 0 4px rgba(245,158,11,.18)}
-    .dot.err{background:var(--err); box-shadow:0 0 0 4px rgba(239,68,68,.18)}
-
-    .btns{display:flex; gap:8px; flex-wrap:wrap}
-    .btn{
-      text-decoration:none;
-      font-size:12px; font-weight:800;
-      padding:9px 11px; border-radius:12px;
-      border:1px solid var(--line);
-      background:#fff;
-      color: var(--text);
-    }
-    .btn:hover{background:#f8fafc}
-
-    /* ✅ STACK dọc */
-    .grid{display:grid; gap:14px; grid-template-columns: 1fr; margin-top:14px}
-
-    .card{
-      background: var(--card);
-      border:1px solid var(--line);
-      border-radius: var(--radius2);
+    .hero{
+      background: linear-gradient(90deg, rgba(34,197,94,.18), rgba(59,130,246,.18), rgba(236,72,153,.18));
+      border: 1px solid var(--border);
+      border-radius: 26px;
       box-shadow: var(--shadow);
-      padding:14px;
+      overflow: hidden;
+      position: relative;
     }
-    .card h2{margin:0 0 10px 0;font-size:14px;color: rgba(15,23,42,.92)}
-    .sectionTitle{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-
-    .kpiRow{display:grid; gap:10px; grid-template-columns: repeat(3, minmax(0,1fr))}
-    @media (max-width: 780px){ .kpiRow{grid-template-columns:1fr} }
-    .kpi{padding:12px;border:1px solid var(--line);border-radius: 14px;background:#fff}
-    .kpi .label{font-size:12px;color:var(--muted)}
-    .kpi .value{font-size:22px;font-weight:950;margin-top:4px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-
-    .tableWrap{border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#fff}
-    .table{
-      width:100%;
-      border-collapse: collapse;
-      background:#fff;
-      min-width: 520px;
-    }
-    .table th,.table td{padding:10px 10px;border-bottom:1px solid var(--line);font-size:13px; vertical-align:top}
-    .table th{color:#0f172a;text-align:left;background:#f8fafc}
-    .table tr:last-child td{border-bottom:none}
-
-    .split{display:grid; gap:14px; grid-template-columns: 1fr 1fr}
-    @media (max-width: 980px){ .split{grid-template-columns:1fr} }
-    .imgCard{padding:12px;border-radius: 14px;border:1px solid var(--line);background:#fff}
-    .imgCard h3{margin:0 0 10px 0;font-size:13px;color:#0f172a}
-    img.chart{width:100%;display:block;border-radius: 12px;border:1px solid var(--line);background:#fff}
-
-    .footer{margin-top:14px;color:var(--muted);font-size:12px;display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center}
-
-    /* mobile */
-    @media (max-width: 520px){
-      .btns{gap:6px}
-      .btn{padding:8px 10px;border-radius:10px}
-      .kpi .value{font-size:20px}
-      .chip{max-width:100%; overflow:hidden; text-overflow:ellipsis}
-      .tableWrap{overflow-x:auto; -webkit-overflow-scrolling: touch;}
-      .table{min-width: 760px;}
+    .hero::after{
+      content:"";
+      position:absolute; inset:-60px -60px auto auto;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(255,255,255,.5), transparent 60%);
+      filter: blur(1px);
+      transform: rotate(8deg);
+      pointer-events:none;
     }
 
-    .note{
-      display:flex; align-items:center; gap:8px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:#fff7ed;
-      color:#7c2d12;
-      font-size:13px;
-      margin-top:10px;
+    .brand-badge{
+      width: 56px; height: 56px;
+      border-radius: 18px;
+      background: conic-gradient(from 120deg, #22c55e, #3b82f6, #ec4899, #f59e0b, #22c55e);
+      box-shadow: 0 10px 24px rgba(0,0,0,.15);
     }
-    .note.good{background:#f0fdf4;color:#14532d}
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:.45rem;
+      padding: .4rem .7rem;
+      border-radius: 999px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow2);
+      font-size: .9rem;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .chip .dot{
+      width: .6rem; height: .6rem; border-radius: 99px;
+      background: #e2e8f0;
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,.06);
+    }
+    .dot.ok{ background:#22c55e; }
+    .dot.warn{ background:#f59e0b; }
+    .dot.bad{ background:#ef4444; }
+
+    .btn-chip{
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.7);
+      padding: .42rem .75rem;
+      font-weight: 600;
+    }
+
+    .card-glass{
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow2);
+    }
+
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+
+    .big-number{
+      font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+      font-weight: 800;
+      letter-spacing: .3px;
+    }
+
+    .table thead th{
+      font-weight: 800;
+      border-bottom: 1px solid rgba(0,0,0,.08) !important;
+    }
+
+    .img-chart{
+      width: 100%;
+      height: auto;
+      display:block;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.5);
+    }
+
+    .help-i{
+      width: 22px; height: 22px;
+      border-radius: 99px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border: 1px solid rgba(15,23,42,.18);
+      background: rgba(255,255,255,.7);
+      color:#0f172a;
+      font-size: .85rem;
+      cursor: pointer;
+      user-select:none;
+    }
+
+    .section-title{
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 576px){
+      .hero{
+        border-radius: 22px;
+      }
+      .brand-badge{
+        width: 50px; height: 50px; border-radius: 16px;
+      }
+      .chip{
+        font-size: .85rem;
+        padding: .38rem .62rem;
+      }
+      .btn-chip{
+        padding: .38rem .62rem;
+        font-size: .9rem;
+      }
+      .card-glass{
+        border-radius: 16px;
+      }
+    }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="rainbow-frame is-loading" id="ledFrame">
-      <div class="rainbow-inner">
-        <div class="topbar">
-          <div class="brand">
-            <div class="logo" aria-hidden="true"></div>
+  <div class="container container-max py-3 py-md-4">
+
+    <!-- HEADER / HERO -->
+    <div class="hero p-3 p-md-4 mb-3 mb-md-4">
+      <div class="d-flex align-items-start gap-3 flex-wrap">
+        <div class="brand-badge flex-shrink-0"></div>
+
+        <div class="flex-grow-1">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div>
-              <h1>XSMB Daily Dashboard</h1>
-              <div class="sub">Update 18:30 VN (retry ~5 phút nếu trễ)</div>
+              <div class="h3 mb-0 fw-black" style="font-weight: 900;">XSMB Daily Dashboard</div>
+              <div class="text-secondary mt-1">
+                Cập nhật 18:30 VN (tự thử lại mỗi ~5 phút nếu trễ)
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+              <span class="chip" id="chipStatus">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">Đang kiểm tra…</span>
+              </span>
+
+              <span class="chip">
+                Updated (VN):
+                <span class="mono" id="metaUpdatedVn">—</span>
+              </span>
+
+              <span class="chip">
+                SHA:
+                <span class="mono" id="metaSha">—</span>
+              </span>
+
+              <span class="chip">
+                Run:
+                <span class="mono" id="metaRun">—</span>
+              </span>
+
+              <a class="btn btn-chip" href="./data/xsmb.json" target="_blank" rel="noopener">xsmb.json</a>
+              <a class="btn btn-chip" href="./data/last7.json" target="_blank" rel="noopener">last7.json</a>
+              <a class="btn btn-chip" href="./data/site_meta.json" target="_blank" rel="noopener">meta</a>
             </div>
           </div>
 
-          <div class="chips">
-            <div class="chip" id="liveChip">
-              <span class="dot" id="liveDot"></span>
-              <span id="statusText">Đang tải dữ liệu…</span>
-            </div>
-            <div class="chip mono">Updated (VN): <span id="updatedAt">—</span></div>
-            <div class="chip mono">SHA: <span id="sha">—</span></div>
-            <div class="chip mono">Run: <span id="runId">—</span></div>
-            <!-- <div class="btns">
-              <a class="btn" href="./data/xsmb.json">xsmb.json</a>
-              <a class="btn" href="./data/last7.json">last7.json</a>
-              <a class="btn" href="./data/site_meta.json">meta</a>
-            </div> -->
+          <div class="alert alert-danger mt-3 mb-0 d-none" id="topError">
+            <div class="fw-bold">Lỗi tải dữ liệu</div>
+            <div class="mono small" id="topErrorText">—</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="grid">
-      <!-- 1) Kết quả mới nhất -->
-      <div class="card">
-        <div class="sectionTitle">
-          <h2 style="margin:0">Kết quả mới nhất</h2>
-          <div class="chip mono" id="sourceText">Nguồn: —</div>
-        </div>
-
-        <div id="noteBox" class="note" style="display:none;">—</div>
-
-        <div class="kpiRow" style="margin-top:10px">
-          <div class="kpi">
-            <div class="label">Ngày</div>
-            <div class="value" id="lastDate">—</div>
-          </div>
-          <div class="kpi">
-            <div class="label">Giải đặc biệt</div>
-            <div class="value mono" id="special">—</div>
-          </div>
-          <div class="kpi">
-            <div class="label">Đề (2 số cuối ĐB)</div>
-            <div class="value mono" id="special2d">—</div>
-          </div>
-        </div>
-
-        <div class="tableWrap" style="margin-top:12px">
-          <table class="table" aria-label="Bảng kết quả xổ số">
-            <thead>
-              <tr><th style="width:170px">Giải</th><th>Kết quả</th></tr>
-            </thead>
-            <tbody id="resultRows">
-              <tr><td style="color:var(--muted)">Đang tải…</td><td style="color:var(--muted)">—</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="footer">
-          <div>© Auto generated by GitHub Actions</div>
-          <div class="mono">Top10: <a href="./data/top10_delta.json">delta</a> • <a href="./data/top10_30d.json">30d</a></div>
+    <!-- KẾT QUẢ MỚI NHẤT -->
+    <div class="card-glass p-3 p-md-4 mb-3 mb-md-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="h5 mb-0 section-title">Kết quả mới nhất</div>
+        <div class="chip">
+          Nguồn:
+          <span class="mono" id="metaSource">—</span>
         </div>
       </div>
 
-      <!-- ✅ 2) Lịch 7 ngày nằm dưới KQ mới nhất -->
-      <div class="card">
-        <h2>Lịch gần nhất 7 ngày (full)</h2>
-        <div class="tableWrap">
-          <table class="table" id="last7Table" aria-label="Lịch 7 ngày">
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <div class="card-glass p-3 h-100">
+            <div class="text-secondary">Ngày</div>
+            <div class="big-number" id="latestDate">—</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="card-glass p-3 h-100">
+            <div class="text-secondary">Giải đặc biệt</div>
+            <div class="big-number mono" id="latestSpecial">—</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="card-glass p-3 h-100">
+            <div class="text-secondary">Đề (2 số cuối ĐB)</div>
+            <div class="big-number mono" id="latestDe">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
             <thead>
               <tr>
-                <th>Ngày</th>
-                <th>ĐB</th>
-                <th>Nhất</th>
-                <th>Nhì</th>
-                <th>Ba</th>
-                <th>Tư</th>
-                <th>Năm</th>
-                <th>Sáu</th>
-                <th>Bảy</th>
+                <th style="width: 180px;">Giải</th>
+                <th>Kết quả</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td colspan="9" style="color:var(--muted)">Đang tải…</td></tr>
+            <tbody id="latestTable">
+              <tr><td colspan="2" class="text-secondary">Đang tải…</td></tr>
             </tbody>
           </table>
         </div>
+        <div class="text-secondary small mt-2">© Tự động tạo bởi GitHub Actions</div>
       </div>
+    </div>
 
-      <!-- 3) Top10 & chart -->
-      <div class="card">
-        <h2>Top 10</h2>
-
-        <div class="split">
-          <div class="imgCard">
-            <h3>Top 10 số lâu chưa về (text)</h3>
-            <div class="tableWrap">
-              <table class="table" id="top10DeltaTable">
-                <thead><tr><th>#</th><th>Số</th><th>Delta (ngày)</th></tr></thead>
-                <tbody><tr><td colspan="3" style="color:var(--muted)">Đang tải…</td></tr></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="imgCard">
-            <h3>Top 10 (30 ngày) (text)</h3>
-            <div class="tableWrap">
-              <table class="table" id="top10_30dTable">
-                <thead><tr><th>#</th><th>Số</th><th>Lượt</th></tr></thead>
-                <tbody><tr><td colspan="3" style="color:var(--muted)">Đang tải…</td></tr></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="split" style="margin-top:14px">
-          <div class="imgCard">
-            <h3>Top 10 lâu chưa về (chart)</h3>
-            <img class="chart" src="./images/delta_top_10.jpg" alt="Top 10 lâu chưa về" />
-          </div>
-          <div class="imgCard">
-            <h3>Top 10 (30 ngày) (chart)</h3>
-            <img class="chart" src="./images/top10_30d.jpg" alt="Top 10 30 ngày" />
-          </div>
+    <!-- LỊCH 7 NGÀY -->
+    <div class="card-glass p-3 p-md-4 mb-3 mb-md-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="h5 mb-0 section-title">Lịch gần nhất 7 ngày (đầy đủ)</div>
+        <div class="text-secondary small">
+          Quy tắc hiển thị số: <b>ĐB/G1/G2/G3 = 5 số</b> • <b>G4/G5 = 4 số</b> • <b>G6 = 3 số</b> • <b>G7 = 2 số</b>
         </div>
       </div>
 
-      <!-- 4) Biểu đồ -->
-      <div class="card">
-        <h2>Biểu đồ</h2>
-        <div class="split">
-          <div class="imgCard"><h3>Line 30D Total</h3><img class="chart" src="./images/line_30d_total.jpg" alt="30D total" /></div>
-          <div class="imgCard"><h3>Line 30D Unique</h3><img class="chart" src="./images/line_30d_unique.jpg" alt="30D unique" /></div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>ĐB</th>
+              <th>Nhất</th>
+              <th>Nhì</th>
+              <th>Ba</th>
+              <th>Tư</th>
+              <th>Năm</th>
+              <th>Sáu</th>
+              <th>Bảy</th>
+            </tr>
+          </thead>
+          <tbody id="last7Table">
+            <tr><td colspan="9" class="text-secondary">Đang tải…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TOP 10 (TEXT) -->
+    <div class="row g-3 g-md-4 mb-3 mb-md-4">
+      <div class="col-12 col-lg-6">
+        <div class="card-glass p-3 p-md-4 h-100">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="h5 mb-0 section-title">Top 10 số lâu chưa về (text)</div>
+            <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
+              data-bs-title="Top 10 số lâu chưa về"
+              data-bs-content="Danh sách 10 số có khoảng cách (delta) lớn nhất so với lần xuất hiện gần nhất, tính theo dữ liệu hiện có.">
+              i
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th style="width: 56px;">#</th>
+                  <th>Số</th>
+                  <th>Delta (ngày)</th>
+                </tr>
+              </thead>
+              <tbody id="top10DeltaTable">
+                <tr><td colspan="3" class="text-secondary">Đang tải…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="split" style="margin-top:14px">
-          <div class="imgCard"><h3>Delta (00–99)</h3><img class="chart" src="./images/delta.jpg" alt="delta" /></div>
-          <div class="imgCard"><h3>Heatmap (1 year)</h3><img class="chart" src="./images/heatmap.jpg" alt="heatmap" /></div>
-        </div>
-        <div class="split" style="margin-top:14px">
-          <div class="imgCard"><h3>Top 10 (1 year)</h3><img class="chart" src="./images/top-10.jpg" alt="top10 year" /></div>
-          <div class="imgCard"><h3>Distribution (1 year)</h3><img class="chart" src="./images/distribution.jpg" alt="dist" /></div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="card-glass p-3 p-md-4 h-100">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="h5 mb-0 section-title">Top 10 (30 ngày) (text)</div>
+            <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
+              data-bs-title="Top 10 trong 30 ngày"
+              data-bs-content="Tổng hợp tần suất xuất hiện của các số trong 30 ngày gần nhất (nếu file top10_30d.json có).">
+              i
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th style="width: 56px;">#</th>
+                  <th>Số</th>
+                  <th>Số lần</th>
+                </tr>
+              </thead>
+              <tbody id="top10_30dTable">
+                <tr><td colspan="3" class="text-secondary">Đang tải…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- BIỂU ĐỒ (ẢNH) - tự ẩn nếu không có -->
+    <div class="card-glass p-3 p-md-4 mb-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="h5 mb-0 section-title">Biểu đồ (tự ẩn nếu chưa có ảnh)</div>
+        <div class="text-secondary small">Nếu file ảnh chưa tồn tại trong <span class="mono">/images</span> thì ô đó sẽ tự ẩn.</div>
+      </div>
+
+      <div class="row g-3" id="chartsGrid">
+        <!-- Mỗi chart-card có data-src, JS sẽ kiểm tra tồn tại rồi mới hiện -->
+        <div class="col-12 col-lg-6 chart-card" data-src="./images/top10_delta.png">
+          <div class="card-glass p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="fw-bold">Top 10 lâu chưa về (chart)</div>
+              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
+                data-bs-title="Biểu đồ Top 10 lâu chưa về"
+                data-bs-content="Ảnh được tạo tự động từ pipeline. Nếu chưa có dữ liệu/ảnh, mục này sẽ tự ẩn.">
+                i
+              </span>
+            </div>
+            <img class="img-chart" alt="Top 10 lâu chưa về" />
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6 chart-card" data-src="./images/top10_30d.png">
+          <div class="card-glass p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="fw-bold">Top 10 (30 ngày) (chart)</div>
+              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
+                data-bs-title="Biểu đồ Top 10 (30 ngày)"
+                data-bs-content="Ảnh tần suất 30 ngày gần nhất. Tự ẩn nếu file chưa tồn tại.">
+                i
+              </span>
+            </div>
+            <img class="img-chart" alt="Top 10 30 ngày" />
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6 chart-card" data-src="./images/line_30d_total.png">
+          <div class="card-glass p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="fw-bold">Line 30D Total</div>
+              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
+                data-bs-title="Line 30D Total"
+                data-bs-content="Đường biểu diễn tổng số lần xuất hiện theo ngày trong 30 ngày. Tự ẩn nếu chưa có ảnh.">
+                i
+              </span>
+            </div>
+            <img class="img-chart" alt="30D total" />
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6 chart-card" data-src="./images/line_30d_unique.png">
+          <div class="card-glass p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="fw-bold">Line 30D Unique</div>
+              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
+                data-bs-title="Line 30D Unique"
+                data-bs-content="Đường biểu diễn số lượng số khác nhau xuất hiện theo ngày trong 30 ngày. Tự ẩn nếu chưa có ảnh.">
+                i
+              </span>
+            </div>
+            <img class="img-chart" alt="30D unique" />
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6 chart-card" data-src="./images/heatmap_1y.png">
+          <div class="card-glass p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="fw-bold">Heatmap (1 năm)</div>
+              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
+                data-bs-title="Heatmap (1 năm)"
+                data-bs-content="Bản đồ nhiệt theo ngày trong 1 năm. Tự ẩn nếu chưa có ảnh.">
+                i
+              </span>
+            </div>
+            <img class="img-chart" alt="heatmap" />
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6 chart-card" data-src="./images/distribution_1y.png">
+          <div class="card-glass p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="fw-bold">Distribution (1 năm)</div>
+              <span class="help-i" data-bs-toggle="popover" data-bs-placement="left"
+                data-bs-title="Distribution (1 năm)"
+                data-bs-content="Phân phối tần suất theo 00–99 trong 1 năm. Tự ẩn nếu chưa có ảnh.">
+                i
+              </span>
+            </div>
+            <img class="img-chart" alt="dist" />
+          </div>
+        </div>
+      </div>
+
+      <div class="text-secondary small mt-3">
+        Mẹo: Nếu bạn đặt tên ảnh khác, chỉ cần sửa <span class="mono">data-src</span> phía trên cho đúng.
+      </div>
+    </div>
+
+    <div class="text-center text-secondary small pb-3">
+    CHUN3NGAN © 2026
+    </div>
+
   </div>
 
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    const fmt2 = (n)=> String(n).padStart(2,'0');
-    const fmtDateVN = (iso)=>{
-      const d = new Date(iso);
-      return d.toLocaleDateString("vi-VN", {year:"numeric", month:"2-digit", day:"2-digit"});
-    };
+    // ========= Helpers =========
+    const $ = (sel) => document.querySelector(sel);
 
-    function safeInt(x){ const n = Number(x); return Number.isFinite(n) ? n : null; }
-
-    function setLedState(state){
-      const frame = document.getElementById("ledFrame");
-      if(!frame) return;
-      frame.classList.remove("is-loading","is-success","is-warn","is-error");
-      frame.classList.add("is-" + state);
+    async function fetchJson(url, {allow404=false} = {}) {
+      const res = await fetch(url, {cache: "no-store"});
+      if (!res.ok) {
+        if (allow404 && res.status === 404) return null;
+        throw new Error(`${url} HTTP ${res.status}`);
+      }
+      return res.json();
     }
 
-    function setStatus(kind, text){
-      const dot = document.getElementById("liveDot");
-      document.getElementById("statusText").textContent = text;
-      dot.classList.remove("warn","err");
-      if(kind === "warn") dot.classList.add("warn");
-      if(kind === "err") dot.classList.add("err");
+    function padNum(value, width) {
+      // value có thể là number hoặc string
+      if (value === null || value === undefined) return "—";
+      const s = String(value).trim();
+      if (!s) return "—";
+      // Nếu có dấu '-' hay không phải số thuần, vẫn pad theo chuỗi
+      const digits = s.replace(/\D/g,'');
+      // Nếu s là số (vd "2817"), pad. Nếu s có ký tự khác, trả nguyên.
+      if (/^\d+$/.test(s)) return s.padStart(width, "0");
+      if (digits.length && digits.length < width && digits === s) return s.padStart(width, "0");
+      return s;
     }
 
-    function buildLatestRows(latest){
-      const map = [
-        ["Giải ĐB", ["special"]],
-        ["Giải nhất", ["prize1"]],
-        ["Giải nhì", ["prize2_1","prize2_2"]],
-        ["Giải ba", ["prize3_1","prize3_2","prize3_3","prize3_4","prize3_5","prize3_6"]],
-        ["Giải tư", ["prize4_1","prize4_2","prize4_3","prize4_4"]],
-        ["Giải năm", ["prize5_1","prize5_2","prize5_3","prize5_4","prize5_5","prize5_6"]],
-        ["Giải sáu", ["prize6_1","prize6_2","prize6_3"]],
-        ["Giải bảy", ["prize7_1","prize7_2","prize7_3","prize7_4"]],
+    // Quy tắc:
+    // ĐB: 5, G1: 5, G2/G3: 5, G4/G5: 4, G6: 3, G7: 2
+    function fmtPrize(key, value) {
+      const k = key.toLowerCase();
+      if (k === "special") return padNum(value, 5);
+      if (k === "prize1") return padNum(value, 5);
+
+      if (k.startsWith("prize2_")) return padNum(value, 5);
+      if (k.startsWith("prize3_")) return padNum(value, 5);
+
+      if (k.startsWith("prize4_")) return padNum(value, 4);
+      if (k.startsWith("prize5_")) return padNum(value, 4);
+
+      if (k.startsWith("prize6_")) return padNum(value, 3);
+
+      if (k.startsWith("prize7_")) return padNum(value, 2);
+
+      return String(value ?? "—");
+    }
+
+    function toVnDisplayDate(isoLike) {
+      // Hiển thị dạng dd/mm/yyyy (phù hợp VN) cho "Ngày" kết quả
+      // isoLike ví dụ: "2026-01-14T00:00:00.000"
+      if (!isoLike) return "—";
+      const d = new Date(isoLike);
+      if (isNaN(d.getTime())) return String(isoLike);
+      const fmt = new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day:"2-digit", month:"2-digit", year:"numeric" });
+      return fmt.format(d);
+    }
+
+    function setStatus(kind, text) {
+      const dot = $("#statusDot");
+      const t = $("#statusText");
+      dot.classList.remove("ok","warn","bad");
+      dot.classList.add(kind);
+      t.textContent = text;
+    }
+
+    function showTopError(errText) {
+      $("#topError").classList.remove("d-none");
+      $("#topErrorText").textContent = errText;
+      setStatus("bad", "Lỗi tải dữ liệu");
+    }
+
+    // ========= Render latest =========
+    function renderLatest(row) {
+      // row: object của 1 ngày
+      const dateStr = toVnDisplayDate(row?.date);
+      $("#latestDate").textContent = dateStr;
+
+      const special5 = fmtPrize("special", row?.special);
+      $("#latestSpecial").textContent = special5;
+      $("#latestDe").textContent = special5.slice(-2);
+
+      const groups = [
+        { label: "Giải ĐB", values: [fmtPrize("special", row?.special)] },
+        { label: "Giải nhất", values: [fmtPrize("prize1", row?.prize1)] },
+        { label: "Giải nhì", values: [fmtPrize("prize2_1", row?.prize2_1), fmtPrize("prize2_2", row?.prize2_2)] },
+        { label: "Giải ba", values: [
+          fmtPrize("prize3_1", row?.prize3_1), fmtPrize("prize3_2", row?.prize3_2), fmtPrize("prize3_3", row?.prize3_3),
+          fmtPrize("prize3_4", row?.prize3_4), fmtPrize("prize3_5", row?.prize3_5), fmtPrize("prize3_6", row?.prize3_6),
+        ] },
+        { label: "Giải tư", values: [
+          fmtPrize("prize4_1", row?.prize4_1), fmtPrize("prize4_2", row?.prize4_2),
+          fmtPrize("prize4_3", row?.prize4_3), fmtPrize("prize4_4", row?.prize4_4),
+        ] },
+        { label: "Giải năm", values: [
+          fmtPrize("prize5_1", row?.prize5_1), fmtPrize("prize5_2", row?.prize5_2), fmtPrize("prize5_3", row?.prize5_3),
+          fmtPrize("prize5_4", row?.prize5_4), fmtPrize("prize5_5", row?.prize5_5), fmtPrize("prize5_6", row?.prize5_6),
+        ] },
+        { label: "Giải sáu", values: [
+          fmtPrize("prize6_1", row?.prize6_1), fmtPrize("prize6_2", row?.prize6_2), fmtPrize("prize6_3", row?.prize6_3),
+        ] },
+        { label: "Giải bảy", values: [
+          fmtPrize("prize7_1", row?.prize7_1), fmtPrize("prize7_2", row?.prize7_2),
+          fmtPrize("prize7_3", row?.prize7_3), fmtPrize("prize7_4", row?.prize7_4),
+        ] },
       ];
-      const tbody = document.getElementById("resultRows");
-      tbody.innerHTML = map.map(([label, cols]) => {
-        const vals = cols.map(c => latest[c]).filter(v => v !== undefined && v !== null);
-        return `<tr><td>${label}</td><td class="mono">${vals.join(", ") || "—"}</td></tr>`;
+
+      const tbody = $("#latestTable");
+      tbody.innerHTML = groups.map(g => {
+        const v = g.values.filter(x => x && x !== "—").join(", ");
+        return `<tr>
+          <td class="text-secondary fw-semibold">${g.label}</td>
+          <td class="mono">${v || "—"}</td>
+        </tr>`;
       }).join("");
     }
 
-    function renderTop10Delta(rows){
-      const tb = document.querySelector("#top10DeltaTable tbody");
-      if(!Array.isArray(rows) || rows.length === 0){
-        tb.innerHTML = `<tr><td colspan="3" style="color:var(--muted)">Chưa có dữ liệu</td></tr>`;
-        return;
-      }
-      tb.innerHTML = rows.slice(0,10).map((r, i)=>`
-        <tr>
-          <td>${i+1}</td>
-          <td class="mono">${String(r.num).padStart(2,"0")}</td>
-          <td class="mono">${r.delta}</td>
-        </tr>
-      `).join("");
-    }
-
-    function renderTop10_30d(rows){
-      const tb = document.querySelector("#top10_30dTable tbody");
-      if(!Array.isArray(rows) || rows.length === 0){
-        tb.innerHTML = `<tr><td colspan="3" style="color:var(--muted)">Chưa có dữ liệu</td></tr>`;
-        return;
-      }
-      tb.innerHTML = rows.slice(0,10).map((r, i)=>`
-        <tr>
-          <td>${i+1}</td>
-          <td class="mono">${String(r.num).padStart(2,"0")}</td>
-          <td class="mono">${r.count}</td>
-        </tr>
-      `).join("");
-    }
-
-    function renderLast7(rows){
-      const tb = document.querySelector("#last7Table tbody");
-      if(!Array.isArray(rows) || rows.length === 0){
-        tb.innerHTML = `<tr><td colspan="9" style="color:var(--muted)">Chưa có dữ liệu</td></tr>`;
+    // ========= Render last 7 =========
+    function renderLast7(list) {
+      const tbody = $("#last7Table");
+      if (!Array.isArray(list) || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-secondary">Chưa có dữ liệu.</td></tr>`;
         return;
       }
 
-      const join = (obj, keys)=> keys.map(k=> obj[k]).join(", ");
-      tb.innerHTML = rows.slice().reverse().map(r=>{
-        const d = fmtDateVN(r.date);
-        return `
-          <tr>
-            <td class="mono">${d}</td>
-            <td class="mono">${r.special}</td>
-            <td class="mono">${r.prize1}</td>
-            <td class="mono">${join(r, ["prize2_1","prize2_2"])}</td>
-            <td class="mono">${join(r, ["prize3_1","prize3_2","prize3_3","prize3_4","prize3_5","prize3_6"])}</td>
-            <td class="mono">${join(r, ["prize4_1","prize4_2","prize4_3","prize4_4"])}</td>
-            <td class="mono">${join(r, ["prize5_1","prize5_2","prize5_3","prize5_4","prize5_5","prize5_6"])}</td>
-            <td class="mono">${join(r, ["prize6_1","prize6_2","prize6_3"])}</td>
-            <td class="mono">${join(r, ["prize7_1","prize7_2","prize7_3","prize7_4"])}</td>
-          </tr>
-        `;
+      tbody.innerHTML = list.map(row => {
+        const date = toVnDisplayDate(row?.date);
+        const db = fmtPrize("special", row?.special);
+        const nhat = fmtPrize("prize1", row?.prize1);
+        const nhi = [fmtPrize("prize2_1", row?.prize2_1), fmtPrize("prize2_2", row?.prize2_2)].join(", ");
+        const ba = [
+          fmtPrize("prize3_1", row?.prize3_1), fmtPrize("prize3_2", row?.prize3_2), fmtPrize("prize3_3", row?.prize3_3),
+          fmtPrize("prize3_4", row?.prize3_4), fmtPrize("prize3_5", row?.prize3_5), fmtPrize("prize3_6", row?.prize3_6),
+        ].join(", ");
+        const tu = [
+          fmtPrize("prize4_1", row?.prize4_1), fmtPrize("prize4_2", row?.prize4_2),
+          fmtPrize("prize4_3", row?.prize4_3), fmtPrize("prize4_4", row?.prize4_4),
+        ].join(", ");
+        const nam = [
+          fmtPrize("prize5_1", row?.prize5_1), fmtPrize("prize5_2", row?.prize5_2), fmtPrize("prize5_3", row?.prize5_3),
+          fmtPrize("prize5_4", row?.prize5_4), fmtPrize("prize5_5", row?.prize5_5), fmtPrize("prize5_6", row?.prize5_6),
+        ].join(", ");
+        const sau = [fmtPrize("prize6_1", row?.prize6_1), fmtPrize("prize6_2", row?.prize6_2), fmtPrize("prize6_3", row?.prize6_3)].join(", ");
+        const bay = [fmtPrize("prize7_1", row?.prize7_1), fmtPrize("prize7_2", row?.prize7_2), fmtPrize("prize7_3", row?.prize7_3), fmtPrize("prize7_4", row?.prize7_4)].join(", ");
+
+        return `<tr>
+          <td class="fw-semibold">${date}</td>
+          <td class="mono">${db}</td>
+          <td class="mono">${nhat}</td>
+          <td class="mono">${nhi}</td>
+          <td class="mono">${ba}</td>
+          <td class="mono">${tu}</td>
+          <td class="mono">${nam}</td>
+          <td class="mono">${sau}</td>
+          <td class="mono">${bay}</td>
+        </tr>`;
       }).join("");
     }
 
-    async function fetchJson(url){
-      const res = await fetch(url + "?ts=" + Date.now());
-      if(!res.ok) throw new Error(url + " HTTP " + res.status);
-      return await res.json();
-    }
-
-    async function main(){
-      setLedState("loading");
-      setStatus("ok", "Đang tải dữ liệu…");
-
-      // META (để quyết định warn)
-      let note = "";
-      try{
-        const meta = await fetchJson("./data/site_meta.json");
-        document.getElementById("updatedAt").textContent = meta.updated_at_vn || "—";
-        document.getElementById("sha").textContent = meta.sha || "—";
-        document.getElementById("runId").textContent = meta.run_id || "—";
-        document.getElementById("sourceText").textContent = "Nguồn: " + (meta.source || "—");
-        note = (meta.note || "").toString();
-      }catch(e){
-        // ignore
+    // ========= Render top10 tables =========
+    function renderTop10Delta(data) {
+      const tbody = $("#top10DeltaTable");
+      if (!data) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-secondary">Chưa có file top10_delta.json.</td></tr>`;
+        return;
       }
 
-      // latest xsmb
-      const arr = await fetchJson("./data/xsmb.json");
-      if(!Array.isArray(arr) || arr.length === 0) throw new Error("xsmb.json rỗng");
-      arr.sort((a,b)=> new Date(a.date) - new Date(b.date));
-      const latest = arr[arr.length - 1];
+      // Cho phép 2 format:
+      // 1) [{ "so": "17", "delta": 123 }, ...]
+      // 2) { "items": [...] }
+      const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-secondary">Chưa có dữ liệu Top 10.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = items.slice(0,10).map((it, idx) => {
+        const so = padNum(it.so ?? it.num ?? it.number ?? it.value, 2);
+        const delta = it.delta ?? it.days ?? it.d ?? "—";
+        return `<tr>
+          <td class="text-secondary fw-semibold">${idx+1}</td>
+          <td class="mono fw-bold">${so}</td>
+          <td class="mono">${delta}</td>
+        </tr>`;
+      }).join("");
+    }
 
-      document.getElementById("lastDate").textContent = fmtDateVN(latest.date);
-      const special = safeInt(latest.special);
-      document.getElementById("special").textContent = (special !== null) ? String(special) : "—";
-      document.getElementById("special2d").textContent = (special !== null) ? fmt2(special % 100) : "—";
-      buildLatestRows(latest);
+    function renderTop10_30d(data) {
+      const tbody = $("#top10_30dTable");
+      if (!data) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-secondary">Chưa có file top10_30d.json.</td></tr>`;
+        return;
+      }
+      const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-secondary">Chưa có dữ liệu Top 10 (30 ngày).</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = items.slice(0,10).map((it, idx) => {
+        const so = padNum(it.so ?? it.num ?? it.number ?? it.value, 2);
+        const count = it.count ?? it.times ?? it.freq ?? "—";
+        return `<tr>
+          <td class="text-secondary fw-semibold">${idx+1}</td>
+          <td class="mono fw-bold">${so}</td>
+          <td class="mono">${count}</td>
+        </tr>`;
+      }).join("");
+    }
 
-      // ✅ không crash nếu 404
-      const results = await Promise.allSettled([
-        fetchJson("./data/top10_delta.json"),
-        fetchJson("./data/top10_30d.json"),
-        fetchJson("./data/last7.json"),
-      ]);
+    // ========= Charts: auto hide if image not exist =========
+    async function checkImageExists(url) {
+      // Same-origin: HEAD thường OK. Nếu HEAD fail, thử GET.
+      try {
+        const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+        if (res.ok) return true;
+        if (res.status === 404) return false;
+      } catch (e) {}
+      try {
+        const res2 = await fetch(url, { method: "GET", cache: "no-store" });
+        return res2.ok;
+      } catch (e) {
+        return false;
+      }
+    }
 
-      const topDelta = (results[0].status === "fulfilled") ? results[0].value : [];
-      const top30    = (results[1].status === "fulfilled") ? results[1].value : [];
-      const last7    = (results[2].status === "fulfilled") ? results[2].value : [];
+    async function initCharts() {
+      const cards = Array.from(document.querySelectorAll(".chart-card"));
+      let anyShown = false;
 
-      renderTop10Delta(topDelta);
-      renderTop10_30d(top30);
-      renderLast7(last7);
+      await Promise.all(cards.map(async (card) => {
+        const src = card.getAttribute("data-src");
+        const ok = await checkImageExists(src);
+        if (!ok) {
+          card.classList.add("d-none");
+          return;
+        }
+        const img = card.querySelector("img");
+        img.src = src + "?v=" + Date.now(); // bust cache
+        anyShown = true;
+      }));
 
-      const missing =
-        (results[0].status !== "fulfilled") ||
-        (results[1].status !== "fulfilled") ||
-        (results[2].status !== "fulfilled");
+      if (!anyShown) {
+        // Nếu tất cả đều ẩn, show 1 dòng gợi ý
+        const grid = $("#chartsGrid");
+        const hint = document.createElement("div");
+        hint.className = "col-12";
+        hint.innerHTML = `<div class="alert alert-warning mb-0">
+          Hiện chưa có ảnh biểu đồ trong thư mục <span class="mono">/images</span>. Khi workflow tạo ảnh, các ô sẽ tự hiện.
+        </div>`;
+        grid.appendChild(hint);
+      }
+    }
 
-      // NOTE + LED
-      const noteBox = document.getElementById("noteBox");
-      if(note && note.trim()){
-        noteBox.style.display = "flex";
-        noteBox.textContent = note;
+    // ========= Popovers (icon i) =========
+    function initPopovers() {
+      const els = document.querySelectorAll('[data-bs-toggle="popover"]');
+      els.forEach(el => {
+        new bootstrap.Popover(el, {
+          trigger: "hover focus", // di chuột hoặc bấm
+          container: "body"
+        });
+      });
+    }
 
-        if(note.includes("Chưa có kết quả hôm nay")){
-          noteBox.classList.remove("good");
-          setLedState("warn");
-          setStatus("warn", "Chưa có kết quả hôm nay… (đang hiển thị ngày gần nhất)");
+    // ========= Main =========
+    async function main() {
+      initPopovers();
+
+      // 1) Load meta trước để hiển thị Updated(VN) đúng dạng ISO +07:00 nếu có
+      let meta = null;
+      try {
+        meta = await fetchJson("./data/site_meta.json", {allow404:true});
+      } catch (e) {
+        // không chặn trang nếu meta lỗi
+      }
+
+      if (meta) {
+        $("#metaUpdatedVn").textContent = meta.updated_at_vn || meta.updated_vn || "—";
+        $("#metaSha").textContent = meta.sha || "—";
+        $("#metaRun").textContent = meta.run_id || meta.run || "—";
+        $("#metaSource").textContent = meta.source || "—";
+
+        // Status theo note
+        const note = (meta.note || "").toLowerCase();
+        if (note.includes("chưa") || note.includes("chua") || note.includes("no data")) {
+          setStatus("warn", "Online • Chưa có dữ liệu");
         } else {
-          noteBox.classList.add("good");
-          setLedState("success");
           setStatus("ok", "Online • Đã tải dữ liệu");
         }
-      } else if (missing){
-        noteBox.style.display = "flex";
-        noteBox.classList.remove("good");
-        noteBox.textContent = "Thiếu dữ liệu (top10/last7) — hãy chạy python src/main.py hoặc chờ GitHub Actions cập nhật.";
-        setLedState("warn");
-        setStatus("warn", "Thiếu dữ liệu một phần • Web vẫn hoạt động");
       } else {
-        setLedState("success");
-        setStatus("ok", "Online • Đã tải dữ liệu");
+        $("#metaUpdatedVn").textContent = "—";
+        $("#metaSha").textContent = "—";
+        $("#metaRun").textContent = "—";
+        $("#metaSource").textContent = "—";
+        setStatus("warn", "Online • Chưa có meta");
       }
+
+      // 2) Load dữ liệu chính
+      try {
+        const xsmb = await fetchJson("./data/xsmb.json");
+        // xsmb.json của bạn là mảng: [ {date, special, ...} ]
+        const latest = Array.isArray(xsmb) && xsmb.length ? xsmb[0] : null;
+
+        if (!latest) {
+          $("#latestTable").innerHTML = `<tr><td colspan="2" class="text-secondary">Chưa có dữ liệu hôm nay.</td></tr>`;
+          $("#latestDate").textContent = "—";
+          $("#latestSpecial").textContent = "—";
+          $("#latestDe").textContent = "—";
+        } else {
+          // Format "special" thành 5 số khi hiển thị (vd 2817 -> 02817)
+          renderLatest(latest);
+        }
+
+        // last7
+        const last7 = await fetchJson("./data/last7.json", {allow404:true});
+        if (last7) renderLast7(last7);
+        else $("#last7Table").innerHTML = `<tr><td colspan="9" class="text-secondary">Chưa có file last7.json.</td></tr>`;
+
+        // top10 json (text)
+        const top10Delta = await fetchJson("./data/top10_delta.json", {allow404:true});
+        renderTop10Delta(top10Delta);
+
+        const top10_30d = await fetchJson("./data/top10_30d.json", {allow404:true});
+        renderTop10_30d(top10_30d);
+
+        // Nếu load xsmb ok -> status ok (trừ khi meta note báo chưa có)
+        if (!meta || !(String(meta.note||"").toLowerCase().includes("chưa") || String(meta.note||"").toLowerCase().includes("chua"))) {
+          setStatus("ok", "Online • Đã tải dữ liệu");
+        }
+
+      } catch (e) {
+        showTopError(String(e.message || e));
+      }
+
+      // 3) Charts
+      await initCharts();
     }
 
-    main().catch(err=>{
-      console.error(err);
-      setLedState("error");
-      setStatus("err", "Lỗi • " + err.message);
-      document.getElementById("resultRows").innerHTML =
-        `<tr><td style="color:var(--muted)">Lỗi</td><td style="color:var(--muted)">${err.message}</td></tr>`;
-    });
+    main();
   </script>
 </body>
 </html>
