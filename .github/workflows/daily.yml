@@ -5,18 +5,16 @@ on:
     - cron: "35 11 * * *"   # 18:35 VN (UTC+7)
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
 concurrency:
   group: xsmb-pages
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  update-data:
+    name: Update data & push to main
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -35,6 +33,7 @@ jobs:
 
       - name: Run crawler
         run: |
+          set -e
           echo "Running XSMB crawler..."
           python src/main.py
 
@@ -43,7 +42,6 @@ jobs:
           set -e
           mkdir -p data images
           touch .nojekyll
-
           if [ ! -f "data/xsmb.json" ]; then
             python - <<'PY'
 import json, pathlib
@@ -59,14 +57,32 @@ PY
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add -A data images .nojekyll || true
+          git add -A data images .nojekyll index.html README.md src requirements.txt || true
 
           if git diff --cached --quiet; then
-            echo "No data changes detected. Skipping commit."
-          else
-            git commit -m "chore: update XSMB data ($(date -u +"%Y-%m-%d %H:%M UTC"))"
-            git push
+            echo "No changes. Skip commit."
+            exit 0
           fi
+
+          git commit -m "chore: update XSMB data ($(date -u +"%Y-%m-%d %H:%M UTC"))"
+          git push
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: update-data
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Disable Jekyll
+        run: touch .nojekyll
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
