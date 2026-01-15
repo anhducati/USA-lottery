@@ -46,15 +46,15 @@ jobs:
           mkdir -p data images
           if [ ! -f "data/xsmb.json" ]; then
             python - <<'PY'
-import json, pathlib
-path = pathlib.Path("data/xsmb.json")
-path.write_text(json.dumps([], ensure_ascii=False), encoding="utf-8")
-print("Created placeholder data/xsmb.json ✅")
-PY
-          fi
+          import json, pathlib
+          path = pathlib.Path("data/xsmb.json")
+          path.write_text(json.dumps([], ensure_ascii=False), encoding="utf-8")
+          print("Created placeholder data/xsmb.json ✅")
+          PY
+                    fi
 
-      - name: Commit & push if changed
-        run: |
+                - name: Commit & push if changed
+                  run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
