@@ -1,4 +1,4 @@
-name: Daily Update (XSMB) + Deploy Pages
+name: XSMB Daily Update + Deploy
 
 on:
   schedule:
@@ -6,69 +6,39 @@ on:
   workflow_dispatch: {}
 
 concurrency:
-  group: xsmb-pages
+  group: xsmb
   cancel-in-progress: true
 
 jobs:
   update-data:
-    name: Update data & push to main
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run crawler
         run: |
-          set -e
-          echo "Running XSMB crawler..."
           python src/main.py
 
-      - name: Ensure required files exist
+      - name: Commit & push
         run: |
-          set -e
-          mkdir -p data images
-          touch .nojekyll
-          if [ ! -f "data/xsmb.json" ]; then
-            python - <<'PY'
-import json, pathlib
-path = pathlib.Path("data/xsmb.json")
-path.write_text(json.dumps([], ensure_ascii=False), encoding="utf-8")
-print("Created placeholder data/xsmb.json ✅")
-PY
-          fi
-
-      - name: Commit & push if changed
-        run: |
-          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git add -A data images .nojekyll index.html README.md src requirements.txt || true
-
-          if git diff --cached --quiet; then
-            echo "No changes. Skip commit."
-            exit 0
-          fi
-
-          git commit -m "chore: update XSMB data ($(date -u +"%Y-%m-%d %H:%M UTC"))"
+          git add data images site_meta.json || true
+          git diff --cached --quiet || git commit -m "chore: update xsmb data"
           git push
 
   deploy-pages:
-    name: Deploy to GitHub Pages
     needs: update-data
     runs-on: ubuntu-latest
     permissions:
@@ -76,21 +46,13 @@ PY
       id-token: write
 
     steps:
-      - name: Checkout latest main
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+      - uses: actions/checkout@v4
 
-      - name: Disable Jekyll
-        run: touch .nojekyll
+      - run: touch .nojekyll
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v4
