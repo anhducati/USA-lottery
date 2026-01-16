@@ -64,42 +64,42 @@ jobs:
           # 45 phút timeout job => để dư, lấy 80 lần ~ 40 phút
           MAX_ATTEMPTS=80
 
-          # Check "đã xổ" dựa trên data/xsmb.json:
-          # Có record date bắt đầu bằng TARGET_DATE và field "special" != null
+          # Check "đã xổ" dựa trên data/xsmb.json
           is_ready() {
             TARGET_DATE="${TARGET_DATE}" python - <<'PY'
-import json, os, sys
-target = os.environ["TARGET_DATE"]
-path = "data/xsmb.json"
-try:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-except Exception:
-    # chưa có file/đọc lỗi => coi như chưa có kết quả
-    sys.exit(2)
+          import json, os, sys
 
-ok = False
-if isinstance(data, list):
-    for row in data:
-        d = str(row.get("date", ""))
-        if d.startswith(target):
-            ok = row.get("special") is not None
-            break
+          target = os.environ["TARGET_DATE"]
+          path = "data/xsmb.json"
 
-sys.exit(0 if ok else 2)
-PY
+          try:
+              with open(path, "r", encoding="utf-8") as f:
+                  data = json.load(f)
+          except Exception:
+              # Chưa có file/đọc lỗi => coi như chưa có kết quả
+              sys.exit(2)
+
+          ok = False
+          if isinstance(data, list):
+              for row in data:
+                  d = str(row.get("date", ""))
+                  if d.startswith(target):
+                      ok = row.get("special") is not None
+                      break
+
+          sys.exit(0 if ok else 2)
+          PY
           }
 
           for i in $(seq 1 ${MAX_ATTEMPTS}); do
             echo "------------------------------------------------------------"
             echo "[$i/${MAX_ATTEMPTS}] ⏳ KIỂM TRA: ${TARGET_DATE} | VN: $(date '+%H:%M:%S')"
 
-            # Chạy tool update của bạn
-            # (không fail workflow nếu scraper tạm thời lỗi mạng)
+            # Chạy tool update của bạn (không fail nếu scraper tạm thời lỗi)
             python src/main.py || true
 
             if is_ready; then
-              echo "✅ ĐÃ XỔ: Đã có kết quả cho ${TARGET_DATE} | VN: $(date '+%Y-%m-%d %H:%M:%S %z')"
+              echo "✅ ĐÃ XỔ: Đã có kết quả cho ${TARGET_DATE} | VN: $(date '+%Y-%m-%d %H:%M:%S %z'))"
               break
             else
               if [ "$i" -lt "${MAX_ATTEMPTS}" ]; then
@@ -122,7 +122,6 @@ PY
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add đúng những thứ thực sự tồn tại trong repo
           git add data images index.html .nojekyll 2>/dev/null || true
 
           if git diff --cached --quiet; then
