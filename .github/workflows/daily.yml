@@ -1,4 +1,4 @@
-name: Daily Update Data
+name: Daily Update XSMB Data
 
 on:
   schedule:
@@ -39,40 +39,43 @@ jobs:
           python -V
           pip install -r requirements.txt
 
-      - name: Retry lấy kết quả (mỗi 30s) từ 18:33 tới khi có
+      - name: Retry lấy kết quả (mỗi 30s) từ 18:33 đến khi có
         env:
           TZ: Asia/Ho_Chi_Minh
           INPUT_DATE: ${{ github.event.inputs.date }}
         run: |
           set -euo pipefail
 
-          echo "🕒 Bắt đầu (VN): $(date '+%Y-%m-%d %H:%M:%S %z')"
+          echo "============================================================"
+          echo "🕒 BẮT ĐẦU (VN): $(date '+%Y-%m-%d %H:%M:%S %z')"
+          echo "📌 Workflow: $GITHUB_WORKFLOW | Run: $GITHUB_RUN_ID"
           echo "🔁 Retry interval: 30s"
+          echo "============================================================"
 
           # Ngày mục tiêu: ưu tiên input, nếu rỗng -> hôm nay theo giờ VN
-          if [ -n "${INPUT_DATE:-}" ]; then
+          if [ -n "${INPUT_DATE}" ]; then
             TARGET_DATE="${INPUT_DATE}"
           else
             TARGET_DATE="$(date '+%Y-%m-%d')"
           fi
-
-          export TARGET_DATE
           echo "🎯 Ngày cần lấy: ${TARGET_DATE}"
 
           INTERVAL=30
-          MAX_ATTEMPTS=120   # 120 * 30s = 60 phút
+          # 45 phút timeout job => để dư, lấy 80 lần ~ 40 phút
+          MAX_ATTEMPTS=80
 
-          # Kiểm tra "đã xổ" dựa trên data/xsmb.json
+          # Check "đã xổ" dựa trên data/xsmb.json:
+          # Có record date bắt đầu bằng TARGET_DATE và field "special" != null
           is_ready() {
-            python - <<'PY'
-import json, sys, os
-target = os.environ.get("TARGET_DATE", "")
+            TARGET_DATE="${TARGET_DATE}" python - <<'PY'
+import json, os, sys
+target = os.environ["TARGET_DATE"]
 path = "data/xsmb.json"
 try:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
 except Exception:
-    # file chưa có / lỗi đọc => coi như chưa sẵn sàng
+    # chưa có file/đọc lỗi => coi như chưa có kết quả
     sys.exit(2)
 
 ok = False
@@ -80,8 +83,7 @@ if isinstance(data, list):
     for row in data:
         d = str(row.get("date", ""))
         if d.startswith(target):
-            # có special (không None) coi như đã có kết quả
-            ok = (row.get("special") is not None)
+            ok = row.get("special") is not None
             break
 
 sys.exit(0 if ok else 2)
@@ -90,23 +92,24 @@ PY
 
           for i in $(seq 1 ${MAX_ATTEMPTS}); do
             echo "------------------------------------------------------------"
-            echo "[$i/${MAX_ATTEMPTS}] ⏳ KIỂM TRA XSMB ${TARGET_DATE} (VN: $(date '+%H:%M:%S'))"
+            echo "[$i/${MAX_ATTEMPTS}] ⏳ KIỂM TRA: ${TARGET_DATE} | VN: $(date '+%H:%M:%S')"
 
-            # Chạy tool fetch/generate của bạn
-            # Nếu chưa xổ, script có thể không cập nhật file => is_ready vẫn fail (đúng)
+            # Chạy tool update của bạn
+            # (không fail workflow nếu scraper tạm thời lỗi mạng)
             python src/main.py || true
 
             if is_ready; then
-              echo "✅ ĐÃ XỔ! Đã có kết quả cho ${TARGET_DATE} (VN: $(date '+%Y-%m-%d %H:%M:%S %z'))"
+              echo "✅ ĐÃ XỔ: Đã có kết quả cho ${TARGET_DATE} | VN: $(date '+%Y-%m-%d %H:%M:%S %z')"
               break
-            fi
-
-            if [ "$i" -lt "${MAX_ATTEMPTS}" ]; then
-              echo "🟡 CHƯA XỔ / CHƯA CÓ KẾT QUẢ -> RETRY sau ${INTERVAL}s..."
-              sleep ${INTERVAL}
             else
-              echo "🔴 HẾT RETRY (${MAX_ATTEMPTS} lần). Vẫn CHƯA CÓ KẾT QUẢ cho ${TARGET_DATE}."
-              exit 1
+              if [ "$i" -lt "${MAX_ATTEMPTS}" ]; then
+                echo "🟡 CHƯA XỔ: Chưa có kết quả cho ${TARGET_DATE}"
+                echo "🔁 RETRY sau ${INTERVAL}s..."
+                sleep ${INTERVAL}
+              else
+                echo "🔴 HẾT LƯỢT RETRY: Vẫn CHƯA CÓ KẾT QUẢ cho ${TARGET_DATE}"
+                exit 1
+              fi
             fi
           done
 
@@ -116,19 +119,17 @@ PY
         run: |
           set -euo pipefail
 
-          # đảm bảo Pages không bị Jekyll can thiệp
-          touch .nojekyll
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # Add đúng những thứ thực sự tồn tại trong repo
           git add data images index.html .nojekyll 2>/dev/null || true
 
           if git diff --cached --quiet; then
-            echo "ℹ️ Không có thay đổi để commit (VN: $(date '+%Y-%m-%d %H:%M:%S %z'))"
+            echo "ℹ️ Không có thay đổi để commit | VN: $(date '+%Y-%m-%d %H:%M:%S %z')"
             exit 0
           fi
 
           git commit -m "chore: update XSMB data (VN $(date '+%Y-%m-%d %H:%M'))"
           git push
-          echo "✅ Đã push dữ liệu mới (VN: $(date '+%Y-%m-%d %H:%M:%S %z'))"
+          echo "✅ Đã push dữ liệu mới | VN: $(date '+%Y-%m-%d %H:%M:%S %z')"
