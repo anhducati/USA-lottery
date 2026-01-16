@@ -1,58 +1,136 @@
-name: XSMB Daily Update + Deploy
+name: Daily Update XSMB Data (18:33 VN)
 
 on:
   schedule:
-    - cron: "35 11 * * *"   # 18:35 VN (UTC+7)
-  workflow_dispatch: {}
+    # 18:33 (VN, UTC+7) = 11:33 UTC
+    - cron: "33 11 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Ngày cần lấy (YYYY-MM-DD). Bỏ trống = hôm nay theo giờ VN."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
 
 concurrency:
-  group: xsmb
+  group: daily-xsmb
   cancel-in-progress: true
 
 jobs:
   update-data:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
+          python -V
           pip install -r requirements.txt
 
-      - name: Run crawler
+      - name: Retry lấy kết quả (mỗi 30s) cho tới khi có
+        env:
+          TZ: Asia/Ho_Chi_Minh
+          INPUT_DATE: ${{ github.event.inputs.date }}
         run: |
-          python src/main.py
+          set -euo pipefail
 
-      - name: Commit & push
+          echo "🕒 Thời gian bắt đầu (VN): $(date '+%Y-%m-%d %H:%M:%S %z')"
+          echo "🔁 Retry interval: 30s"
+
+          # Ngày mục tiêu: ưu tiên input, nếu rỗng -> hôm nay theo giờ VN
+          if [ -n "${INPUT_DATE}" ]; then
+            TARGET_DATE="${INPUT_DATE}"
+          else
+            TARGET_DATE="$(date '+%Y-%m-%d')"
+          fi
+          echo "🎯 Ngày cần lấy: ${TARGET_DATE}"
+
+          # Cấu hình retry
+          INTERVAL=30
+          # 60 phút = 120 lần (mỗi 30s). Bạn có thể tăng nếu muốn.
+          MAX_ATTEMPTS=120
+
+          # Hàm kiểm tra "đã xổ" hay chưa dựa trên data/xsmb.json
+          # Điều kiện: trong xsmb.json có record date bắt đầu bằng TARGET_DATE
+          # và có field "special" (để tránh trường hợp rỗng)
+          is_ready() {
+            python - <<'PY'
+import json, sys, os
+target = os.environ["TARGET_DATE"]
+path = "data/xsmb.json"
+try:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(1)
+
+ok = False
+for row in data if isinstance(data, list) else []:
+    d = str(row.get("date",""))
+    if d.startswith(target):
+        # có special là coi như đã có kết quả
+        if row.get("special") is not None:
+            ok = True
+        break
+
+sys.exit(0 if ok else 2)
+PY
+          }
+
+          # Vòng lặp retry
+          for i in $(seq 1 ${MAX_ATTEMPTS}); do
+            echo "------------------------------------------------------------"
+            echo "[$i/${MAX_ATTEMPTS}] ⏳ Kiểm tra kết quả XSMB ngày ${TARGET_DATE} (VN: $(date '+%H:%M:%S'))"
+
+            # Chạy scraper/generator của bạn
+            # Nếu script của bạn tự biết hôm nay thì không cần truyền date.
+            # Nếu bạn có hỗ trợ tham số date thì tự thêm vào ở đây.
+            python src/main.py || true
+
+            if is_ready; then
+              echo "✅ ĐÃ XỔ! Đã có kết quả cho ${TARGET_DATE} (VN: $(date '+%Y-%m-%d %H:%M:%S %z'))"
+              break
+            else
+              if [ "$i" -lt "${MAX_ATTEMPTS}" ]; then
+                echo "🟡 CHƯA XỔ / CHƯA CÓ KẾT QUẢ -> retry sau ${INTERVAL}s..."
+                sleep ${INTERVAL}
+              else
+                echo "🔴 HẾT THỜI GIAN RETRY (${MAX_ATTEMPTS} lần). Vẫn CHƯA CÓ KẾT QUẢ cho ${TARGET_DATE}."
+                echo "➡️ Bạn có thể tăng MAX_ATTEMPTS nếu muốn chờ lâu hơn."
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Commit & push nếu có thay đổi
+        env:
+          TZ: Asia/Ho_Chi_Minh
         run: |
+          set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data images site_meta.json || true
-          git diff --cached --quiet || git commit -m "chore: update xsmb data"
+
+          # Add đúng path (không còn lỗi site_meta.json)
+          git add data images index.html .nojekyll 2>/dev/null || true
+
+          if git diff --cached --quiet; then
+            echo "ℹ️ Không có thay đổi để commit (VN: $(date '+%Y-%m-%d %H:%M:%S %z'))"
+            exit 0
+          fi
+
+          git commit -m "chore: update XSMB data (VN $(date '+%Y-%m-%d %H:%M'))"
           git push
-
-  deploy-pages:
-    needs: update-data
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - run: touch .nojekyll
-
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-      - uses: actions/deploy-pages@v4
+          echo "✅ Đã push dữ liệu mới lên repo (VN: $(date '+%Y-%m-%d %H:%M:%S %z'))"
