@@ -1,4 +1,4 @@
-name: Daily Update XSMB Data (18:33 VN)
+name: Daily Update  Data 
 
 on:
   schedule:
